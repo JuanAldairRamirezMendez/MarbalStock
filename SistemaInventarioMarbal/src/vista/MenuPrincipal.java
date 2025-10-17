@@ -1,0 +1,106 @@
+package vista;
+
+/**
+ * MenuPrincipal - Interfaz principal del sistema post-autenticación
+ * 
+ * SISTEMA DE INVENTARIO MARBAL - Inversiones Comerciales Marbal E.I.R.L.
+ * Proyecto académico - Análisis y Diseño de Sistemas de Información
+ * 
+ * RESPONSABLE: Diego García (U23247615)
+ * ROL: Líder de integración / Coordinador
+ * 
+ * RESPONSABILIDADES DE DIEGO:
+ * - Integrar Modelo, Vista y Controlador
+ * - Asegurar funcionalidad de botones y eventos
+ * - Implementar navegación entre módulos del sistema
+ * - Controlar acceso a funciones según rol de usuario
+ * - Realizar pruebas finales del sistema
+ * 
+ * DESCRIPCIÓN:
+ * Esta clase implementa el menú principal del sistema, mostrando las
+ * opciones disponibles según el rol del usuario autenticado. Es el
+ * centro de navegación que integra todos los módulos del sistema.
+ * 
+ * ARQUITECTURA MVC - INTEGRACIÓN:
+ * Diego García es responsable de integrar:
+ * 
+ * MODELOS (Keila Mateo):
+ * - Producto.java
+ * - Proveedor.java  
+ * - Cliente.java
+ * - Venta.java
+ * - Usuario.java
+ * - OrdenCompra.java
+ * - Reporte.java
+ * 
+ * VISTAS (Diego García + Rufo Ferrel):
+ * - MenuPrincipal.java (Diego)
+ * - ProductoFrame.java (Diego)
+ * - LoginFrame.java (Rufo)
+ * - [Otras interfaces a implementar]
+ * 
+ * CONTROLADORES (Diego + Erick + Rufo):
+ * - InventarioController.java (Diego)
+ * - UsuarioController.java (Erick)
+ * - OrdenCompraController.java (Erick)
+ * - ReporteController.java (Rufo)
+ * 
+ * CONEXIÓN BD (Juan Ramírez):
+ * - ConexionBD.java (Juan)
+ * - script_bd.sql (Juan)
+ * 
+ * MÓDULOS DEL MENÚ PRINCIPAL:
+ * 
+ * PARA ADMINISTRADOR:
+ * 1. Gestión de Inventario (ProductoFrame - Diego)
+ * 2. Gestión de Usuarios (UsuarioController - Erick)
+ * 3. Órdenes de Compra (OrdenCompraController - Erick)
+ * 4. Reportes (ReporteController - Rufo)
+ * 5. Gestión de Clientes
+ * 6. Gestión de Proveedores
+ * 7. Registro de Ventas
+ * 8. Configuración del Sistema
+ * 
+ * PARA OPERARIO:
+ * 1. Consultar Inventario
+ * 2. Registrar Consumo Diario (RF01)
+ * 3. Ver Alertas de Stock (RF02)
+ * 4. Mis Reportes (limitados)
+ * 
+ * FUNCIONALIDADES CLAVE:
+ * - Control de acceso por rol (validado con UsuarioController - Erick)
+ * - Navegación entre módulos con eventos de botones
+ * - Visualización de alertas de stock bajo en tiempo real
+ * - Acceso rápido a funciones frecuentes
+ * - Cierre de sesión seguro
+ * 
+ * PRUEBAS FINALES (Responsabilidad de Diego):
+ * - Verificar conexión BD (implementada por Juan)
+ * - Validar integración MVC completa
+ * - Comprobar funcionalidad de todos los botones
+ * - Probar flujos de navegación
+ * - Validar permisos por rol
+ * 
+ * INTEGRACIÓN CON OTRAS CLASES:
+ * - LoginFrame.java (Rufo): Recibe control tras autenticación
+ * - ProductoFrame.java (Diego): Gestión de productos
+ * - InventarioController.java (Diego): Lógica de inventario
+ * - UsuarioController.java (Erick): Validación de permisos
+ * - ReporteController.java (Rufo): Generación de reportes
+ * 
+ * CASOS DE USO RELACIONADOS:
+ * - Todos los RF del sistema (RF01 - RF10)
+ * - Centro de navegación principal
+ * 
+ * FECHA: Octubre 2025
+ * 
+ * @author Diego García
+ * @version 1.0
+ */
+public class MenuPrincipal {
+    public static void main(String[] args) {
+        // Aquí se puede inicializar la interfaz gráfica del menú principal
+        System.out.println("Bienvenido al Sistema de Inventario Marbal");
+        // Lógica para mostrar el menú principal
+    }
+}
