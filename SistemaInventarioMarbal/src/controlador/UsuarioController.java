@@ -1,5 +1,11 @@
 package controlador;
 
+import conexion.ConexionBD;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.Usuario;
@@ -56,39 +62,86 @@ import modelo.Usuario;
  * @version 1.0
  */
 public class UsuarioController {
-    private List<Usuario> usuarios;
+    private final ConexionBD conexionBD;
 
     public UsuarioController() {
-        this.usuarios = new ArrayList<>();
+        this.conexionBD = new ConexionBD();
     }
 
     public void agregarUsuario(Usuario usuario) {
-        usuarios.add(usuario);
+        String sql = "INSERT INTO usuarios(nombre, rol) VALUES (?, ?)";
+        try (Connection conn = conexionBD.abrirConexion();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, usuario.getNombre());
+            ps.setString(2, usuario.getRol());
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    usuario.setId(rs.getInt(1));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al agregar usuario: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
     }
 
     public void eliminarUsuario(int id) {
-        usuarios.removeIf(usuario -> usuario.getId() == id);
+        String sql = "DELETE FROM usuarios WHERE id = ?";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al eliminar usuario: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
     }
 
     public void modificarUsuario(Usuario usuarioModificado) {
-        for (int i = 0; i < usuarios.size(); i++) {
-            Usuario usuario = usuarios.get(i);
-            if (usuario.getId() == usuarioModificado.getId()) {
-                usuarios.set(i, usuarioModificado);
-                break;
-            }
+        String sql = "UPDATE usuarios SET nombre = ?, rol = ? WHERE id = ?";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, usuarioModificado.getNombre());
+            ps.setString(2, usuarioModificado.getRol());
+            ps.setInt(3, usuarioModificado.getId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al modificar usuario: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
         }
     }
 
     public List<Usuario> obtenerUsuarios() {
-        return usuarios;
+        List<Usuario> lista = new ArrayList<>();
+        String sql = "SELECT id, nombre, rol FROM usuarios";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Usuario u = new Usuario(rs.getInt("id"), rs.getString("nombre"), rs.getString("rol"));
+                lista.add(u);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al obtener usuarios: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
+        return lista;
     }
 
     public Usuario obtenerUsuarioPorId(int id) {
-        for (Usuario usuario : usuarios) {
-            if (usuario.getId() == id) {
-                return usuario;
+        String sql = "SELECT id, nombre, rol FROM usuarios WHERE id = ?";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Usuario(rs.getInt("id"), rs.getString("nombre"), rs.getString("rol"));
+                }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al obtener usuario por id: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
         }
         return null;
     }

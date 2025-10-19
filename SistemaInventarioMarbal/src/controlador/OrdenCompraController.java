@@ -1,7 +1,15 @@
 package controlador;
 
+import conexion.ConexionBD;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import modelo.OrdenCompra;
+import modelo.Proveedor;
 
 /**
  * OrdenCompraController - Controlador para órdenes de compra automáticas
@@ -58,26 +66,100 @@ import modelo.OrdenCompra;
  * @version 1.0
  */
 public class OrdenCompraController {
-    
+    private final ConexionBD conexionBD;
+
+    public OrdenCompraController() {
+        this.conexionBD = new ConexionBD();
+    }
+
     public void agregarOrdenCompra(OrdenCompra ordenCompra) {
-        // Lógica para agregar una orden de compra
+        String sql = "INSERT INTO ordenes_compra(fecha, proveedor_id) VALUES (?, ?)";
+        try (Connection conn = conexionBD.abrirConexion();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, ordenCompra.getFecha());
+            ps.setObject(2, ordenCompra.getProveedor() != null ? ordenCompra.getProveedor().getId() : null);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    ordenCompra.setId(rs.getInt(1));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al agregar orden de compra: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
     }
 
     public void eliminarOrdenCompra(int id) {
-        // Lógica para eliminar una orden de compra por ID
+        String sql = "DELETE FROM ordenes_compra WHERE id = ?";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al eliminar orden de compra: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
     }
 
     public void modificarOrdenCompra(OrdenCompra ordenCompra) {
-        // Lógica para modificar una orden de compra
+        String sql = "UPDATE ordenes_compra SET fecha = ?, proveedor_id = ? WHERE id = ?";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ordenCompra.getFecha());
+            ps.setObject(2, ordenCompra.getProveedor() != null ? ordenCompra.getProveedor().getId() : null);
+            ps.setInt(3, ordenCompra.getId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al modificar orden de compra: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
     }
 
     public OrdenCompra obtenerOrdenCompra(int id) {
-        // Lógica para obtener una orden de compra por ID
-        return null; // Cambiar por la implementación real
+        String sql = "SELECT oc.id, oc.fecha, p.id AS pid, p.nombre AS pnombre, p.contacto AS pcontacto "
+                + "FROM ordenes_compra oc LEFT JOIN proveedores p ON oc.proveedor_id = p.id WHERE oc.id = ?";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Proveedor prov = null;
+                    int pid = rs.getInt("pid");
+                    if (!rs.wasNull()) {
+                        prov = new Proveedor(pid, rs.getString("pnombre"), rs.getString("pcontacto"));
+                    }
+                    OrdenCompra oc = new OrdenCompra(rs.getInt("id"), rs.getString("fecha"), prov);
+                    return oc;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al obtener orden de compra: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
+        return null;
     }
 
     public List<OrdenCompra> listarOrdenesCompra() {
-        // Lógica para listar todas las órdenes de compra
-        return null; // Cambiar por la implementación real
+        List<OrdenCompra> lista = new ArrayList<>();
+        String sql = "SELECT oc.id, oc.fecha, p.id AS pid, p.nombre AS pnombre, p.contacto AS pcontacto "
+                + "FROM ordenes_compra oc LEFT JOIN proveedores p ON oc.proveedor_id = p.id";
+        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Proveedor prov = null;
+                int pid = rs.getInt("pid");
+                if (!rs.wasNull()) {
+                    prov = new Proveedor(pid, rs.getString("pnombre"), rs.getString("pcontacto"));
+                }
+                OrdenCompra oc = new OrdenCompra(rs.getInt("id"), rs.getString("fecha"), prov);
+                lista.add(oc);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar ordenes de compra: " + e.getMessage(), e);
+        } finally {
+            conexionBD.cerrarConexion();
+        }
+        return lista;
     }
 }
