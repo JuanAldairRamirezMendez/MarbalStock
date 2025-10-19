@@ -43,38 +43,59 @@ package modelo;
  * @author Keila Mateo
  * @version 1.0
  */
+import java.util.ArrayList;
+import java.util.List;
+
 public class Venta {
+
     private int id;
-    private String fecha;
+    private Cliente cliente;
+    private List<Producto> productos;
     private double total;
 
-    public Venta(int id, String fecha, double total) {
+    public Venta() {
+        productos = new ArrayList<>();
+    }
+
+    public Venta(int id, Cliente cliente) {
         this.id = id;
-        this.fecha = fecha;
-        this.total = total;
+        this.cliente = cliente;
+        this.productos = new ArrayList<>();
     }
 
-    public int getId() {
-        return id;
+    // Getters y Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    public Cliente getCliente() { return cliente; }
+    public void setCliente(Cliente cliente) { this.cliente = cliente; }
+
+    public List<Producto> getProductos() { return productos; }
+
+    public double getTotal() { return total; }
+
+    // Agregar producto a la venta (valida stock)
+    public void agregarProducto(Producto p) {
+        if (p.hayStock()) {
+            productos.add(p);
+            total += p.getPrecioVenta();
+        } else {
+            System.out.println("⚠️ No hay stock disponible del producto: " + p.getNombre());
+        }
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(String fecha) {
-        this.fecha = fecha;
-    }
-
-    public double getTotal() {
+    // Calcular el total de la venta
+    public double calcularTotal() {
+        total = 0;
+        for (Producto p : productos) {
+            total += p.getPrecioVenta();
+        }
         return total;
     }
 
-    public void setTotal(double total) {
-        this.total = total;
+    @Override
+    public String toString() {
+        return "Venta [id=" + id + ", cliente=" + cliente.getNombre() + 
+               ", total=" + total + ", productos=" + productos.size() + "]";
     }
 }
