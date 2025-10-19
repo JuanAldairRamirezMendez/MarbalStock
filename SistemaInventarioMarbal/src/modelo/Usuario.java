@@ -45,12 +45,27 @@ package modelo;
  */
 public class Usuario {
     private int id;
+    // nombre para mostrar (puede ser igual a username si no hay nombre completo)
     private String nombre;
     private String rol;
+    // nuevos campos para autenticación
+    private String username;
+    private String passwordHash;
 
+    // Constructor clásico usado en vistas actuales
     public Usuario(int id, String nombre, String rol) {
         this.id = id;
         this.nombre = nombre;
+        this.rol = rol;
+    }
+
+    // Constructor extendido para autenticación real
+    public Usuario(int id, String username, String passwordHash, String rol) {
+        this.id = id;
+        this.username = username;
+        this.passwordHash = passwordHash;
+        // Si no contamos con nombre completo, usamos el username como nombre para mostrar
+        this.nombre = username;
         this.rol = rol;
     }
 
@@ -78,11 +93,28 @@ public class Usuario {
         this.rol = rol;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     @Override
     public String toString() {
         return "Usuario{" +
                 "id=" + id +
                 ", nombre='" + nombre + '\'' +
+                ", username='" + username + '\'' +
                 ", rol='" + rol + '\'' +
                 '}';
     }

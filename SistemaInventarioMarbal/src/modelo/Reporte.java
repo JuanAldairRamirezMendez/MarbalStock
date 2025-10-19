@@ -40,9 +40,19 @@ package modelo;
  * @author Rufo Ferrel
  * @version 1.0
  */
+import conexion.ConexionBD;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-// Asumiendo que tienes un mecanismo para interactuar con la DB.
 
 public class Reporte {
 
@@ -57,12 +67,25 @@ public class Reporte {
      * @return Los datos procesados del inventario.
      */
     public List<Map<String, Object>> generarReporteInventario(int umbralCritico) {
-        // Lógica de DB:
-        // SELECT nombre, cantidad, precio, (cantidad * precio) AS valorizacion
-        // FROM productos;
         System.out.println("Generando Reporte de Inventario: Stock, Críticos, Valorización.");
-        System.out.println("-> Se utiliza la tabla 'productos'.");
-        return null; 
+        String sql = "SELECT id_producto, nombre, precio, stock, (precio * stock) AS valorizacion FROM producto ORDER BY nombre";
+        List<Map<String, Object>> data = new ArrayList<>();
+        ConexionBD cb = new ConexionBD();
+        try (Connection c = cb.abrirConexion(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("id_producto", rs.getInt("id_producto"));
+                row.put("nombre", rs.getString("nombre"));
+                row.put("precio", rs.getDouble("precio"));
+                row.put("stock", rs.getInt("stock"));
+                row.put("valorizacion", rs.getDouble("valorizacion"));
+                row.put("critico", rs.getInt("stock") < umbralCritico);
+                data.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al generar reporte de inventario: " + e.getMessage());
+        }
+        return data;
     }
 
     // =UNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCOREUNDERSCORE
@@ -77,11 +100,25 @@ public class Reporte {
      * @return Los datos de las ventas (solo fecha y total).
      */
     public List<Map<String, Object>> generarReporteVentasPorPeriodo(String fechaInicio, String fechaFin) {
-        // Lógica de DB:
-        // SELECT fecha, total FROM ventas WHERE fecha BETWEEN :fechaInicio AND :fechaFin;
         System.out.println("Generando Reporte de Ventas (SOLO TOTALES) para el período: " + fechaInicio + " a " + fechaFin);
-        System.out.println("-> ADVERTENCIA: No hay datos de productos ni clientes en la tabla 'ventas'.");
-        return null;
+        String sql = "SELECT DATE(fecha) AS fecha, SUM(total) AS total FROM venta WHERE fecha BETWEEN ? AND ? GROUP BY DATE(fecha) ORDER BY fecha";
+        List<Map<String, Object>> data = new ArrayList<>();
+        ConexionBD cb = new ConexionBD();
+        try (Connection c = cb.abrirConexion(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, fechaInicio);
+            ps.setString(2, fechaFin);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("fecha", rs.getString("fecha"));
+                    row.put("total", rs.getDouble("total"));
+                    data.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al generar reporte de ventas: " + e.getMessage());
+        }
+        return data;
     }
 
     // =========================================================
@@ -109,13 +146,24 @@ public class Reporte {
      * @return Todas las órdenes de compra registradas.
      */
     public List<Map<String, Object>> generarReporteOrdenesCompra() {
-        // Lógica de DB:
-        // SELECT oc.fecha, pr.nombre AS proveedor
-        // FROM ordenes_compra oc
-        // JOIN proveedores pr ON oc.proveedor_id = pr.id;
-        System.out.println("Generando Reporte de Órdenes de Compra (SIN ESTADO)");
-        System.out.println("-> ADVERTENCIA: No se puede diferenciar entre pendientes y completadas, pues falta el campo 'estado'.");
-        return null;
+        System.out.println("Generando Reporte de Órdenes de Compra");
+        String sql = "SELECT oc.id_oc, oc.fecha, p.razon_social AS proveedor, oc.total, oc.estado FROM orden_compra oc JOIN proveedor p ON oc.id_proveedor = p.id_proveedor ORDER BY oc.fecha DESC";
+        List<Map<String, Object>> data = new ArrayList<>();
+        ConexionBD cb = new ConexionBD();
+        try (Connection c = cb.abrirConexion(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("id_oc", rs.getInt("id_oc"));
+                row.put("fecha", rs.getTimestamp("fecha"));
+                row.put("proveedor", rs.getString("proveedor"));
+                row.put("total", rs.getDouble("total"));
+                row.put("estado", rs.getString("estado"));
+                data.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al generar reporte de órdenes de compra: " + e.getMessage());
+        }
+        return data;
     }
 
     // =========================================================
@@ -147,30 +195,35 @@ public void exportarReporte(List<Map<String, Object>> reporteData, String nombre
     }
 
     switch (formato.toUpperCase()) {
+        case "CSV": {
+            File out = new File(nombreArchivo + ".csv");
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(out, java.nio.charset.StandardCharsets.UTF_8))) {
+                // encabezados por claves del primer registro
+                Map<String, Object> first = reporteData.get(0);
+                String[] headers = first.keySet().toArray(new String[0]);
+                bw.write(String.join(",", headers));
+                bw.newLine();
+                for (Map<String, Object> row : reporteData) {
+                    List<String> vals = new ArrayList<>();
+                    for (String h : headers) {
+                        Object v = row.get(h);
+                        String s = v == null ? "" : v.toString().replace("\n", " ").replace(",", ";");
+                        vals.add('"' + s + '"');
+                    }
+                    bw.write(String.join(",", vals));
+                    bw.newLine();
+                }
+                System.out.println("CSV exportado en: " + out.getAbsolutePath());
+            } catch (IOException e) {
+                System.err.println("Error exportando CSV: " + e.getMessage());
+            }
+            break;
+        }
         case "PDF":
-            System.out.println("Generando PDF para firma: " + nombreArchivo + ".pdf");
-            // --------------------------------------------------------------------------
-            // *** LÓGICA DE EXPORTACIÓN A PDF ***
-            // Aquí se usarían librerías como iText o Apache PDFBox.
-            // La lógica incluiría:
-            // 1. Crear un documento PDF.
-            // 2. Añadir un encabezado con el nombre del reporte y la fecha.
-            // 3. Iterar sobre 'reporteData' para construir una tabla PDF con los datos.
-            // 4. Añadir un pie de página o un espacio al final para la firma.
-            //    Ejemplo de línea de firma:
-            //    "____________________________________"
-            //    "Firma del Responsable de Inventario"
-            // 5. Guardar el archivo en el sistema de archivos.
-            // --------------------------------------------------------------------------
-            System.out.println("PDF generado con espacio para firma exitosamente.");
+            System.out.println("Exportación a PDF no implementada en esta versión.");
             break;
         case "XLSX":
-            System.out.println("Exportando reporte '" + nombreArchivo + "' a Excel (XLSX)...");
-            // Lógica de generación de Excel
-            break;
-        case "CSV":
-            System.out.println("Exportando reporte '" + nombreArchivo + "' a CSV...");
-            // Lógica de generación de CSV
+            System.out.println("Exportación a Excel no implementada en esta versión.");
             break;
         default:
             System.out.println("Formato de exportación no soportado: " + formato);

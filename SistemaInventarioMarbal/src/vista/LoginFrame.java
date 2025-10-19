@@ -168,12 +168,17 @@ public class LoginFrame extends JFrame {
     }
 
     private void authenticate() {
-    String username = txtUsername.getText().trim();
+        String username = txtUsername.getText().trim();
+        char[] passChars = txtPassword.getPassword();
+        String password = new String(passChars);
+        java.util.Arrays.fill(passChars, '\0'); // limpiar buffer sensible
 
-    // Validación por nombre usando usuarios cargados desde la BD
-    modelo.Usuario u = usuarioController.autenticarPorNombre(username);
+        // Autenticación real: username + password (SHA-256 contra la BD cargada en memoria)
+        modelo.Usuario u = usuarioController.autenticar(username, password);
         if (u != null) {
-            JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso. Bienvenido: " + u.getNombre(), "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso. Bienvenido: " + u.getUsername(), "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            // Abrir el menú principal y cerrar el login
+            new MenuPrincipal(u).setVisible(true);
             dispose();
             return;
         }

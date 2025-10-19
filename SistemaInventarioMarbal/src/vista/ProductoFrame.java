@@ -299,20 +299,18 @@ public class ProductoFrame extends JFrame {
             String nombre = txtNombre.getText();
             double precio = Double.parseDouble(txtPrecio.getText());
             int stock = Integer.parseInt(txtStock.getText());
-            String tipo = (String) cmbTipoProducto.getSelectedItem();
 
             // Integración con Modelo Producto.java (Keila Mateo)
-            Producto producto = new Producto(id, nombre, precio);
+            Producto producto = new Producto(id, nombre, precio, stock);
             // Nota: En una implementación completa, se agregarían stock y tipo
 
             // Integración con InventarioController (Diego García)
             inventarioController.agregarProducto(producto);
 
-            JOptionPane.showMessageDialog(this,
-                    "Producto guardado exitosamente\n" +
-                            "Integración MVC: Producto.java (Keila) + InventarioController.java (Diego) - OK",
-                    "Éxito",
-                    JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this,
+            "Producto guardado exitosamente\nIntegración MVC: Producto.java (Keila) + InventarioController.java (Diego) - OK",
+            "Éxito",
+            JOptionPane.INFORMATION_MESSAGE);
 
             limpiarFormulario();
             cargarProductos();
@@ -334,9 +332,9 @@ public class ProductoFrame extends JFrame {
             String nombre = txtNombre.getText();
             double precio = Double.parseDouble(txtPrecio.getText());
             int stock = Integer.parseInt(txtStock.getText());
-            String tipo = (String) cmbTipoProducto.getSelectedItem();
+            /* tipo pendiente de uso real en persistencia a BD */
 
-            Producto productoModificado = new Producto(id, nombre, precio);
+            Producto productoModificado = new Producto(id, nombre, precio, stock);
             inventarioController.modificarProducto(productoModificado);
 
             JOptionPane.showMessageDialog(this,
@@ -404,21 +402,20 @@ public class ProductoFrame extends JFrame {
         // Integración con InventarioController para obtener productos
         java.util.List<Producto> productos = inventarioController.listarProductos();
 
-        for (Producto producto : productos) {
-            // Simular datos adicionales para demostración
-            String tipo = Math.random() > 0.5 ? "CONTRATADO" : "ADICIONAL";
-            int stock = (int) (Math.random() * 20);
-            String estado = stock < 5 ? "STOCK BAJO" : "NORMAL";
+    for (Producto producto : productos) {
+        int stock = producto.getStock();
+        String estado = stock < 5 ? "STOCK BAJO" : "NORMAL";
+        String tipo = "N/A"; // pendiente de persistir tipo en BD
 
-            modeloTabla.addRow(new Object[] {
-                    producto.getId(),
-                    producto.getNombre(),
-                    producto.getPrecio(),
-                    stock,
-                    tipo,
-                    estado
-            });
-        }
+        modeloTabla.addRow(new Object[] {
+            producto.getId(),
+            producto.getNombre(),
+            producto.getPrecio(),
+            stock,
+            tipo,
+            estado
+        });
+    }
 
         // Verificar integración MVC
         if (!productos.isEmpty()) {

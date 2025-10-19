@@ -1,12 +1,16 @@
 package controlador;
 
 import conexion.ConexionBD;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import modelo.Usuario;
 
 /**
@@ -63,6 +67,7 @@ import modelo.Usuario;
 public class UsuarioController {
     private List<Usuario> usuarios;
     private String lastError;
+    private static final Logger LOG = Logger.getLogger(UsuarioController.class.getName());
 
     public UsuarioController() {
         this.usuarios = new ArrayList<>();
@@ -100,14 +105,15 @@ public class UsuarioController {
     }
 
     /**
-     * Autentica por el campo 'nombre' (según esquema de BD actual donde no hay username/password).
-     * Retorna el Usuario si encuentra una coincidencia por nombre, o null si no existe.
+     * Autentica por username y password en texto claro (se convierte a SHA-256 y compara con password_hash).
+     * Carga desde memoria (usuarios) previamente obtenidos de la BD.
      */
-    public Usuario autenticarPorNombre(String nombre) {
-        if (nombre == null) return null;
-        for (Usuario usuario : usuarios) {
-            if (nombre.equalsIgnoreCase(usuario.getNombre())) {
-                return usuario;
+    public Usuario autenticar(String username, String passwordPlano) {
+        if (username == null || passwordPlano == null) return null;
+        String hash = sha256(passwordPlano);
+        for (Usuario u : usuarios) {
+            if (username.equalsIgnoreCase(u.getUsername()) && hash.equalsIgnoreCase(u.getPasswordHash())) {
+                return u;
             }
         }
         return null;
@@ -124,25 +130,41 @@ public class UsuarioController {
             lastError = "No se pudo obtener conexión (verifique driver/URL/credenciales).";
             return false;
         }
-        // CAMBIO BD: Se usa 'usuario' en lugar de 'usuarios' y se consulta con JOIN a tabla 'rol'
-        String sql = "SELECT u.id_usuario, u.username, r.nombre AS rol FROM usuario u INNER JOIN rol r ON u.id_rol = r.id_rol WHERE u.activo = 1";
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+        // Se usa 'usuario' y se obtienen username y password_hash + rol
+        String sql = "SELECT u.id_usuario, u.username, u.password_hash, r.nombre AS rol " +
+                     "FROM usuario u INNER JOIN rol r ON u.id_rol = r.id_rol WHERE u.activo = 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             usuarios.clear();
             while (rs.next()) {
-                // CAMBIO BD: Se usa 'id_usuario' y 'username' según esquema normalizado
                 int id = rs.getInt("id_usuario");
-                String nombre = rs.getString("username");
+                String username = rs.getString("username");
+                String passwordHash = rs.getString("password_hash");
                 String rol = rs.getString("rol");
-                usuarios.add(new Usuario(id, nombre, rol));
+                usuarios.add(new Usuario(id, username, passwordHash, rol));
             }
             lastError = null;
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.log(Level.SEVERE, "Error cargando usuarios desde BD", e);
             lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
             return false;
         } finally {
             cb.cerrarConexion();
+        }
+    }
+
+    // Utilidad SHA-256
+    private String sha256(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 no disponible", e);
         }
     }
 

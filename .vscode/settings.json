@@ -1,0 +1,6 @@
+{
+  "java.project.referencedLibraries": [
+    "SistemaInventarioMarbal/lib/**/*.jar"
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic"
+}

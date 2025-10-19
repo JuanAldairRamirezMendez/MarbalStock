@@ -1,10 +1,7 @@
 package vista;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import controlador.UsuarioController;
+import javax.swing.*;
 import modelo.Usuario;
 
 /**
@@ -167,40 +164,15 @@ public class MenuPrincipal extends JFrame {
     }
 
     private void configurarEventos() {
-        btnGestionProductos.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirGestionProductos();
-            }
-        });
+        btnGestionProductos.addActionListener(e -> abrirGestionProductos());
 
-        btnReportes.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirReportes();
-            }
-        });
+        btnReportes.addActionListener(e -> abrirReportes());
 
-        btnOrdenesCompra.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirOrdenesCompra();
-            }
-        });
+        btnOrdenesCompra.addActionListener(e -> abrirOrdenesCompra());
 
-        btnUsuarios.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirGestionUsuarios();
-            }
-        });
+        btnUsuarios.addActionListener(e -> abrirGestionUsuarios());
 
-        btnCerrarSesion.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cerrarSesion();
-            }
-        });
+        btnCerrarSesion.addActionListener(e -> cerrarSesion());
     }
 
     private void aplicarPermisosPorRol() {
@@ -243,9 +215,11 @@ public class MenuPrincipal extends JFrame {
 
         if (confirmacion == JOptionPane.YES_OPTION) {
             dispose();
-            // En una implementación completa, aquí se redirigiría al LoginFrame
             JOptionPane.showMessageDialog(null, "Sesión cerrada exitosamente");
-            System.exit(0); // Temporal - en producción se redirigiría al login
+            // Regresar al LoginFrame en el hilo de UI
+            SwingUtilities.invokeLater(() -> {
+                new LoginFrame().setVisible(true);
+            });
         }
     }
 

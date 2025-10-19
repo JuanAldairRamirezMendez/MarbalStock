@@ -1,6 +1,13 @@
 package controlador;
 
+import conexion.ConexionBD;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import modelo.Producto;
 
 /**
@@ -47,30 +54,63 @@ import modelo.Producto;
  * @version 1.0
  */
 public class InventarioController {
-    private ArrayList<Producto> productos;
+    private static final Logger LOG = Logger.getLogger(InventarioController.class.getName());
+    private final ConexionBD conexionBD = new ConexionBD();
 
-    public InventarioController() {
-        this.productos = new ArrayList<>();
+    public boolean agregarProducto(Producto p) {
+        String sql = "INSERT INTO producto (id_producto, nombre, precio, stock) VALUES (?, ?, ?, ?)"
+                + " ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), precio=VALUES(precio), stock=VALUES(stock)";
+        try (Connection c = conexionBD.abrirConexion(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, p.getId());
+            ps.setString(2, p.getNombre());
+            ps.setDouble(3, p.getPrecio());
+            ps.setInt(4, p.getStock());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOG.log(Level.SEVERE, "Error al insertar/actualizar producto", e);
+            return false;
+        }
     }
 
-    public void agregarProducto(Producto producto) {
-        productos.add(producto);
+    public boolean eliminarProducto(int id) {
+        String sql = "DELETE FROM producto WHERE id_producto = ?";
+        try (Connection c = conexionBD.abrirConexion(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOG.log(Level.SEVERE, "Error al eliminar producto", e);
+            return false;
+        }
     }
 
-    public void eliminarProducto(int id) {
-        productos.removeIf(producto -> producto.getId() == id);
-    }
-
-    public void modificarProducto(Producto productoModificado) {
-        for (int i = 0; i < productos.size(); i++) {
-            if (productos.get(i).getId() == productoModificado.getId()) {
-                productos.set(i, productoModificado);
-                break;
-            }
+    public boolean modificarProducto(Producto p) {
+        String sql = "UPDATE producto SET nombre = ?, precio = ?, stock = ? WHERE id_producto = ?";
+        try (Connection c = conexionBD.abrirConexion(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, p.getNombre());
+            ps.setDouble(2, p.getPrecio());
+            ps.setInt(3, p.getStock());
+            ps.setInt(4, p.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOG.log(Level.SEVERE, "Error al modificar producto", e);
+            return false;
         }
     }
 
     public ArrayList<Producto> listarProductos() {
-        return productos;
+        ArrayList<Producto> lista = new ArrayList<>();
+        String sql = "SELECT id_producto, nombre, precio, stock FROM producto ORDER BY nombre";
+        try (Connection c = conexionBD.abrirConexion(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                int id = rs.getInt("id_producto");
+                String nombre = rs.getString("nombre");
+                double precio = rs.getDouble("precio");
+                int stock = rs.getInt("stock");
+                lista.add(new Producto(id, nombre, precio, stock));
+            }
+        } catch (SQLException e) {
+            LOG.log(Level.SEVERE, "Error al listar productos", e);
+        }
+        return lista;
     }
 }
