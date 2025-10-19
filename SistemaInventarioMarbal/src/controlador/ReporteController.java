@@ -1,6 +1,8 @@
 package controlador;
 
 import modelo.Reporte;
+import java.util.List;
+import java.util.Map;
 
 /**
  * ReporteController - Controlador para generación de reportes
@@ -71,21 +73,77 @@ import modelo.Reporte;
  * @author Rufo Ferrel
  * @version 1.0
  */
+// Asegúrate de que Reporte.java esté en el mismo paquete o sea importable
+
 public class ReporteController {
-    
+
     private Reporte reporte;
 
     public ReporteController() {
+        // Inicializa el modelo Reporte
         this.reporte = new Reporte();
     }
 
-    public void generarReporte() {
-        // Lógica para generar el reporte
-        reporte.crearReporte();
+// ----------------------------------------------------------------------
+// MÉTODOS DE GENERACIÓN DE REPORTES
+// ----------------------------------------------------------------------
+
+    /**
+     * Genera el Reporte de Inventario (Stock, Críticos, Valorización).
+     * @param umbralCritico El stock mínimo para identificar productos críticos.
+     * @return Los datos del reporte generado.
+     */
+    public List<Map<String, Object>> generarReporteInventario(int umbralCritico) {
+        System.out.println("Controller: Solicitando reporte de Inventario con umbral crítico: " + umbralCritico);
+        return reporte.generarReporteInventario(umbralCritico);
     }
 
-    public void exportarReporte(String formato) {
-        // Lógica para exportar el reporte en el formato especificado
-        reporte.exportar(formato);
+    /**
+     * Genera el Reporte de Ventas por Período (Solo Totales, dada la limitación de la BD).
+     * @param fechaInicio Fecha de inicio para el filtro.
+     * @param fechaFin Fecha de fin para el filtro.
+     * @return Los datos del reporte generado (Fecha y Total).
+     */
+    public List<Map<String, Object>> generarReporteVentasPorPeriodo(String fechaInicio, String fechaFin) {
+        System.out.println("Controller: Solicitando reporte de Ventas por período.");
+        return reporte.generarReporteVentasPorPeriodo(fechaInicio, fechaFin);
+    }
+    
+    /**
+     * Genera el Reporte de Consumo Diario (Inviable con el esquema de BD actual).
+     * @return null o una indicación de error.
+     */
+    public List<Map<String, Object>> generarReporteConsumoDiario() {
+        System.out.println("Controller: Solicitando reporte de Consumo Diario.");
+        return reporte.generarReporteConsumoDiario(); // Este método retornará el error/mensaje de inviabilidad
+    }
+
+    /**
+     * Genera el Reporte de Órdenes de Compra (Sin filtro de estado, dada la limitación de la BD).
+     * @return Los datos de todas las Órdenes de Compra.
+     */
+    public List<Map<String, Object>> generarReporteOrdenesCompra() {
+        System.out.println("Controller: Solicitando reporte de Órdenes de Compra (Todas).");
+        return reporte.generarReporteOrdenesCompra();
+    }
+
+// ----------------------------------------------------------------------
+// MÉTODO DE EXPORTACIÓN
+// ----------------------------------------------------------------------
+
+    /**
+     * Exporta un conjunto de datos (reporte) previamente generado.
+     * @param reporteData Los datos a exportar.
+     * @param nombreArchivo El nombre base para el archivo.
+     * @param formato El formato de salida ("PDF", "XLSX", "CSV").
+     */
+    public void exportarReporte(List<Map<String, Object>> reporteData, String nombreArchivo, String formato) {
+        if (reporteData == null) {
+            System.out.println("Controller: Error, no se puede exportar datos nulos.");
+            return;
+        }
+        System.out.println("Controller: Solicitando exportación a formato " + formato);
+        // Delega la lógica de exportación al modelo (Reporte.java)
+        reporte.exportarReporte(reporteData, nombreArchivo, formato);
     }
 }

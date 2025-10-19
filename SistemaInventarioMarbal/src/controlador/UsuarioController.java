@@ -1,14 +1,13 @@
 package controlador;
 
-import conexion.ConexionBD;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.Usuario;
+import conexion.ConexionBD;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.SQLException;
 
 /**
  * UsuarioController - Controlador de autenticación y gestión de usuarios
@@ -62,87 +61,89 @@ import modelo.Usuario;
  * @version 1.0
  */
 public class UsuarioController {
-    private final ConexionBD conexionBD;
+    private List<Usuario> usuarios;
+    private String lastError;
 
     public UsuarioController() {
-        this.conexionBD = new ConexionBD();
+        this.usuarios = new ArrayList<>();
     }
 
     public void agregarUsuario(Usuario usuario) {
-        String sql = "INSERT INTO usuarios(nombre, rol) VALUES (?, ?)";
-        try (Connection conn = conexionBD.abrirConexion();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, usuario.getNombre());
-            ps.setString(2, usuario.getRol());
-            ps.executeUpdate();
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    usuario.setId(rs.getInt(1));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al agregar usuario: " + e.getMessage(), e);
-        } finally {
-            conexionBD.cerrarConexion();
-        }
+        usuarios.add(usuario);
     }
 
     public void eliminarUsuario(int id) {
-        String sql = "DELETE FROM usuarios WHERE id = ?";
-        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al eliminar usuario: " + e.getMessage(), e);
-        } finally {
-            conexionBD.cerrarConexion();
-        }
+        usuarios.removeIf(usuario -> usuario.getId() == id);
     }
 
     public void modificarUsuario(Usuario usuarioModificado) {
-        String sql = "UPDATE usuarios SET nombre = ?, rol = ? WHERE id = ?";
-        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, usuarioModificado.getNombre());
-            ps.setString(2, usuarioModificado.getRol());
-            ps.setInt(3, usuarioModificado.getId());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al modificar usuario: " + e.getMessage(), e);
-        } finally {
-            conexionBD.cerrarConexion();
+        for (int i = 0; i < usuarios.size(); i++) {
+            Usuario usuario = usuarios.get(i);
+            if (usuario.getId() == usuarioModificado.getId()) {
+                usuarios.set(i, usuarioModificado);
+                break;
+            }
         }
     }
 
     public List<Usuario> obtenerUsuarios() {
-        List<Usuario> lista = new ArrayList<>();
-        String sql = "SELECT id, nombre, rol FROM usuarios";
-        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Usuario u = new Usuario(rs.getInt("id"), rs.getString("nombre"), rs.getString("rol"));
-                lista.add(u);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al obtener usuarios: " + e.getMessage(), e);
-        } finally {
-            conexionBD.cerrarConexion();
-        }
-        return lista;
+        return usuarios;
     }
 
     public Usuario obtenerUsuarioPorId(int id) {
-        String sql = "SELECT id, nombre, rol FROM usuarios WHERE id = ?";
-        try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return new Usuario(rs.getInt("id"), rs.getString("nombre"), rs.getString("rol"));
-                }
+        for (Usuario usuario : usuarios) {
+            if (usuario.getId() == id) {
+                return usuario;
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al obtener usuario por id: " + e.getMessage(), e);
-        } finally {
-            conexionBD.cerrarConexion();
         }
         return null;
+    }
+
+    /**
+     * Autentica por el campo 'nombre' (según esquema de BD actual donde no hay username/password).
+     * Retorna el Usuario si encuentra una coincidencia por nombre, o null si no existe.
+     */
+    public Usuario autenticarPorNombre(String nombre) {
+        if (nombre == null) return null;
+        for (Usuario usuario : usuarios) {
+            if (nombre.equalsIgnoreCase(usuario.getNombre())) {
+                return usuario;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Carga los usuarios desde la base de datos (tabla usuarios: id, nombre, rol)
+     */
+    public boolean cargarUsuariosDesdeBD() {
+        ConexionBD cb = new ConexionBD();
+        Connection conn = cb.abrirConexion();
+        if (conn == null) {
+            lastError = "No se pudo obtener conexión (verifique driver/URL/credenciales).";
+            return false;
+        }
+        String sql = "SELECT id, nombre, rol FROM usuarios";
+        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            usuarios.clear();
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String nombre = rs.getString("nombre");
+                String rol = rs.getString("rol");
+                usuarios.add(new Usuario(id, nombre, rol));
+            }
+            lastError = null;
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
+            return false;
+        } finally {
+            cb.cerrarConexion();
+        }
+    }
+
+    public String getLastError() {
+        return lastError;
     }
 }
