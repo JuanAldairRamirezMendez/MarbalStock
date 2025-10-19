@@ -78,7 +78,7 @@ public class Venta {
     public void agregarProducto(Producto p) {
         if (p.hayStock()) {
             productos.add(p);
-            total += p.getPrecioVenta();
+            total += p.getPrecio();
         } else {
             System.out.println("⚠️ No hay stock disponible del producto: " + p.getNombre());
         }
@@ -88,7 +88,7 @@ public class Venta {
     public double calcularTotal() {
         total = 0;
         for (Producto p : productos) {
-            total += p.getPrecioVenta();
+            total += p.getPrecio();
         }
         return total;
     }

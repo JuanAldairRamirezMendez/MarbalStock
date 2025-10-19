@@ -73,7 +73,8 @@ public class OrdenCompraController {
     }
 
     public void agregarOrdenCompra(OrdenCompra ordenCompra) {
-        String sql = "INSERT INTO ordenes_compra(fecha, proveedor_id) VALUES (?, ?)";
+        // CAMBIO BD: Se usa 'orden_compra' y 'id_proveedor' según esquema normalizado
+        String sql = "INSERT INTO orden_compra(fecha, id_proveedor, id_usuario, estado, total) VALUES (?, ?, 1, 'PENDIENTE', 0.00)";
         try (Connection conn = conexionBD.abrirConexion();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, ordenCompra.getFecha());
@@ -92,7 +93,8 @@ public class OrdenCompraController {
     }
 
     public void eliminarOrdenCompra(int id) {
-        String sql = "DELETE FROM ordenes_compra WHERE id = ?";
+        // CAMBIO BD: Se usa 'orden_compra' y 'id_oc' según esquema normalizado
+        String sql = "DELETE FROM orden_compra WHERE id_oc = ?";
         try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -104,7 +106,8 @@ public class OrdenCompraController {
     }
 
     public void modificarOrdenCompra(OrdenCompra ordenCompra) {
-        String sql = "UPDATE ordenes_compra SET fecha = ?, proveedor_id = ? WHERE id = ?";
+        // CAMBIO BD: Se usa 'orden_compra', 'id_proveedor' y 'id_oc' según esquema normalizado
+        String sql = "UPDATE orden_compra SET fecha = ?, id_proveedor = ? WHERE id_oc = ?";
         try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ordenCompra.getFecha());
             ps.setObject(2, ordenCompra.getProveedor() != null ? ordenCompra.getProveedor().getId() : null);
@@ -118,8 +121,9 @@ public class OrdenCompraController {
     }
 
     public OrdenCompra obtenerOrdenCompra(int id) {
-        String sql = "SELECT oc.id, oc.fecha, p.id AS pid, p.nombre AS pnombre, p.contacto AS pcontacto "
-                + "FROM ordenes_compra oc LEFT JOIN proveedores p ON oc.proveedor_id = p.id WHERE oc.id = ?";
+        // CAMBIO BD: Se usa 'orden_compra', 'proveedor', 'id_oc', 'id_proveedor' según esquema normalizado
+        String sql = "SELECT oc.id_oc, oc.fecha, p.id_proveedor AS pid, p.razon_social AS pnombre, p.telefono AS pcontacto "
+                + "FROM orden_compra oc LEFT JOIN proveedor p ON oc.id_proveedor = p.id_proveedor WHERE oc.id_oc = ?";
         try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -129,7 +133,7 @@ public class OrdenCompraController {
                     if (!rs.wasNull()) {
                         prov = new Proveedor(pid, rs.getString("pnombre"), rs.getString("pcontacto"));
                     }
-                    OrdenCompra oc = new OrdenCompra(rs.getInt("id"), rs.getString("fecha"), prov);
+                    OrdenCompra oc = new OrdenCompra(rs.getInt("id_oc"), rs.getString("fecha"), prov);
                     return oc;
                 }
             }
@@ -143,8 +147,9 @@ public class OrdenCompraController {
 
     public List<OrdenCompra> listarOrdenesCompra() {
         List<OrdenCompra> lista = new ArrayList<>();
-        String sql = "SELECT oc.id, oc.fecha, p.id AS pid, p.nombre AS pnombre, p.contacto AS pcontacto "
-                + "FROM ordenes_compra oc LEFT JOIN proveedores p ON oc.proveedor_id = p.id";
+        // CAMBIO BD: Se usa 'orden_compra', 'proveedor', 'id_oc', 'id_proveedor' según esquema normalizado
+        String sql = "SELECT oc.id_oc, oc.fecha, p.id_proveedor AS pid, p.razon_social AS pnombre, p.telefono AS pcontacto "
+                + "FROM orden_compra oc LEFT JOIN proveedor p ON oc.id_proveedor = p.id_proveedor";
         try (Connection conn = conexionBD.abrirConexion(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Proveedor prov = null;
@@ -152,7 +157,7 @@ public class OrdenCompraController {
                 if (!rs.wasNull()) {
                     prov = new Proveedor(pid, rs.getString("pnombre"), rs.getString("pcontacto"));
                 }
-                OrdenCompra oc = new OrdenCompra(rs.getInt("id"), rs.getString("fecha"), prov);
+                OrdenCompra oc = new OrdenCompra(rs.getInt("id_oc"), rs.getString("fecha"), prov);
                 lista.add(oc);
             }
         } catch (SQLException e) {

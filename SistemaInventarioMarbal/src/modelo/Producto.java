@@ -43,11 +43,15 @@ public class Producto {
     private int id;
     private String nombre;
     private double precio;
+    private int stock;
 
-    public Producto(int id, String nombre, double precio) {
+    
+
+    public Producto(int id, String nombre, double precio, int stock) {
         this.id = id;
         this.nombre = nombre;
         this.precio = precio;
+        this.stock = stock;
     }
 
     public int getId() {
@@ -73,4 +77,17 @@ public class Producto {
     public void setPrecio(double precio) {
         this.precio = precio;
     }
+
+    public int getStock() {
+        return stock;
+    }
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
+
+    public boolean hayStock() {
+        return stock > 0;
+    }
+
+    
 }

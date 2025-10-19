@@ -1,13 +1,13 @@
 package controlador;
 
-import java.util.ArrayList;
-import java.util.List;
-import modelo.Usuario;
 import conexion.ConexionBD;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import modelo.Usuario;
 
 /**
  * UsuarioController - Controlador de autenticación y gestión de usuarios
@@ -114,7 +114,8 @@ public class UsuarioController {
     }
 
     /**
-     * Carga los usuarios desde la base de datos (tabla usuarios: id, nombre, rol)
+     * Carga los usuarios desde la base de datos (tabla usuario: id_usuario, username, id_rol)
+     * CAMBIO BD: Ajustado para usar el esquema normalizado - tabla 'usuario' con columnas correctas
      */
     public boolean cargarUsuariosDesdeBD() {
         ConexionBD cb = new ConexionBD();
@@ -123,12 +124,14 @@ public class UsuarioController {
             lastError = "No se pudo obtener conexión (verifique driver/URL/credenciales).";
             return false;
         }
-        String sql = "SELECT id, nombre, rol FROM usuarios";
+        // CAMBIO BD: Se usa 'usuario' en lugar de 'usuarios' y se consulta con JOIN a tabla 'rol'
+        String sql = "SELECT u.id_usuario, u.username, r.nombre AS rol FROM usuario u INNER JOIN rol r ON u.id_rol = r.id_rol WHERE u.activo = 1";
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             usuarios.clear();
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String nombre = rs.getString("nombre");
+                // CAMBIO BD: Se usa 'id_usuario' y 'username' según esquema normalizado
+                int id = rs.getInt("id_usuario");
+                String nombre = rs.getString("username");
                 String rol = rs.getString("rol");
                 usuarios.add(new Usuario(id, nombre, rol));
             }
