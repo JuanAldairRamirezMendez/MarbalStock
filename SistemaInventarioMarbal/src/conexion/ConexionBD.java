@@ -5,48 +5,27 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * ConexionBD - Clase de conexión a la base de datos MySQL
- * 
- * SISTEMA DE INVENTARIO MARBAL - Inversiones Comerciales Marbal E.I.R.L.
- * Proyecto académico - Análisis y Diseño de Sistemas de Información
- * 
- * RESPONSABLE: Juan Ramírez (U20201597)
- * ROL: Conexión a Base de Datos + Script SQL
- * 
- * RESPONSABILIDADES:
- * - Programar conexión JDBC (MySQL)
- * - Probar conexión desde clase test
- * - Documentar parámetros de conexión (usuario, contraseña, puerto)
- * 
- * DESCRIPCIÓN:
- * Esta clase implementa el patrón Singleton para gestionar la conexión
- * a la base de datos MySQL del sistema de inventario. Permite centralizar
- * toda la información en una base de datos relacional (RF09).
- * 
- * BASE DE DATOS: MySQL
- * PUERTO: 3306
- * ESQUEMA: marbal_inventario
- * 
- * FECHA: Octubre 2025
- * CURSO: Sección 40833
- * DOCENTE: Bances Saavedra, David Enrique
- * 
- * @author Juan Ramírez
- * @version 1.0
+ * ConexionBD - MySQL (XAMPP/Workbench)
+ * Responsable: Juan Ramírez (U20201597)
  */
 public class ConexionBD {
-    private String url = "jdbc:mysql://localhost:3306/tu_base_de_datos";
-    private String usuario = "tu_usuario";
-    private String contraseña = "tu_contraseña";
+    private static final String URL =
+        "jdbc:mysql://127.0.0.1:3306/marbal_inventario"
+        + "?useSSL=false&allowPublicKeyRetrieval=true"
+        + "&serverTimezone=America/Lima"
+        + "&useUnicode=true&characterEncoding=utf8";
+    private static final String USUARIO = "root";      // o 'marbal'
+    private static final String PASSWORD = "";         // en XAMPP suele ser vacío
+
     private Connection conexion;
 
     public Connection abrirConexion() {
         try {
             if (conexion == null || conexion.isClosed()) {
-                conexion = DriverManager.getConnection(url, usuario, contraseña);
+                conexion = DriverManager.getConnection(URL, USUARIO, PASSWORD);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error al conectar a MySQL: " + e.getMessage(), e);
         }
         return conexion;
     }
@@ -57,7 +36,7 @@ public class ConexionBD {
                 conexion.close();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error al cerrar la conexión: " + e.getMessage(), e);
         }
     }
 }
