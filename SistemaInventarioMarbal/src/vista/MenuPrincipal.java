@@ -1,5 +1,12 @@
 package vista;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import controlador.UsuarioController;
+import modelo.Usuario;
+
 /**
  * MenuPrincipal - Interfaz principal del sistema post-autenticación
  * 
@@ -26,7 +33,7 @@ package vista;
  * 
  * MODELOS (Keila Mateo):
  * - Producto.java
- * - Proveedor.java  
+ * - Proveedor.java
  * - Cliente.java
  * - Venta.java
  * - Usuario.java
@@ -97,10 +104,158 @@ package vista;
  * @author Diego García
  * @version 1.0
  */
-public class MenuPrincipal {
+public class MenuPrincipal extends JFrame {
+    private JButton btnGestionProductos;
+    private JButton btnReportes;
+    private JButton btnOrdenesCompra;
+    private JButton btnUsuarios;
+    private JButton btnCerrarSesion;
+    private JLabel lblUsuario;
+    private JLabel lblRol;
+
+    private Usuario usuarioActual;
+
+    public MenuPrincipal(Usuario usuario) {
+        this.usuarioActual = usuario;
+        inicializarInterfaz();
+        configurarEventos();
+        aplicarPermisosPorRol();
+    }
+
+    private void inicializarInterfaz() {
+        setTitle("Sistema de Inventario Marbal - Menú Principal");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+
+        // Panel de información del usuario
+        JPanel panelUsuario = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        lblUsuario = new JLabel("Usuario: " + usuarioActual.getNombre());
+        lblRol = new JLabel("Rol: " + usuarioActual.getRol());
+        panelUsuario.add(lblUsuario);
+        panelUsuario.add(lblRol);
+        add(panelUsuario, BorderLayout.NORTH);
+
+        // Panel de botones principales
+        JPanel panelBotones = new JPanel(new GridLayout(4, 2, 10, 10));
+        panelBotones.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        btnGestionProductos = new JButton("Gestión de Productos");
+        btnReportes = new JButton("Reportes del Sistema");
+        btnOrdenesCompra = new JButton("Órdenes de Compra");
+        btnUsuarios = new JButton("Gestión de Usuarios");
+        btnCerrarSesion = new JButton("Cerrar Sesión");
+
+        panelBotones.add(btnGestionProductos);
+        panelBotones.add(btnReportes);
+        panelBotones.add(btnOrdenesCompra);
+        panelBotones.add(btnUsuarios);
+
+        // Espacios vacíos para mantener el layout
+        panelBotones.add(new JLabel());
+        panelBotones.add(new JLabel());
+        panelBotones.add(new JLabel());
+        panelBotones.add(btnCerrarSesion);
+
+        add(panelBotones, BorderLayout.CENTER);
+
+        // Panel de estado
+        JPanel panelEstado = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelEstado.add(new JLabel("Sistema de Inventario Marbal - Conectado"));
+        add(panelEstado, BorderLayout.SOUTH);
+    }
+
+    private void configurarEventos() {
+        btnGestionProductos.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirGestionProductos();
+            }
+        });
+
+        btnReportes.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirReportes();
+            }
+        });
+
+        btnOrdenesCompra.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirOrdenesCompra();
+            }
+        });
+
+        btnUsuarios.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirGestionUsuarios();
+            }
+        });
+
+        btnCerrarSesion.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cerrarSesion();
+            }
+        });
+    }
+
+    private void aplicarPermisosPorRol() {
+        // Control de acceso por rol
+        if ("Operario".equals(usuarioActual.getRol())) {
+            btnUsuarios.setEnabled(false);
+            btnOrdenesCompra.setEnabled(false);
+        }
+    }
+
+    private void abrirGestionProductos() {
+        // Integración con ProductoFrame
+        ProductoFrame productoFrame = new ProductoFrame();
+        productoFrame.setVisible(true);
+    }
+
+    private void abrirReportes() {
+        JOptionPane.showMessageDialog(this,
+                "Integración con ReporteController (Rufo Ferrel)\n" +
+                        "Módulo de Reportes - En desarrollo");
+    }
+
+    private void abrirOrdenesCompra() {
+        JOptionPane.showMessageDialog(this,
+                "Integración con OrdenCompraController (Erick Estrada)\n" +
+                        "Módulo de Órdenes de Compra - En desarrollo");
+    }
+
+    private void abrirGestionUsuarios() {
+        JOptionPane.showMessageDialog(this,
+                "Integración con UsuarioController (Erick Estrada)\n" +
+                        "Módulo de Gestión de Usuarios - En desarrollo");
+    }
+
+    private void cerrarSesion() {
+        int confirmacion = JOptionPane.showConfirmDialog(this,
+                "¿Está seguro que desea cerrar sesión?",
+                "Cerrar Sesión",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            dispose();
+            // En una implementación completa, aquí se redirigiría al LoginFrame
+            JOptionPane.showMessageDialog(null, "Sesión cerrada exitosamente");
+            System.exit(0); // Temporal - en producción se redirigiría al login
+        }
+    }
+
     public static void main(String[] args) {
-        // Aquí se puede inicializar la interfaz gráfica del menú principal
-        System.out.println("Bienvenido al Sistema de Inventario Marbal");
-        // Lógica para mostrar el menú principal
+        // Para pruebas - crear un usuario de ejemplo
+        Usuario usuarioPrueba = new Usuario(1, "Diego García", "Administrador");
+
+        SwingUtilities.invokeLater(() -> {
+            MenuPrincipal menu = new MenuPrincipal(usuarioPrueba);
+            menu.setVisible(true);
+        });
     }
 }
