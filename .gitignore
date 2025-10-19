@@ -1,0 +1,11 @@
+# Build outputs
+/SistemaInventarioMarbal/bin/
+/SistemaInventarioMarbal/out/
+
+# Local JDBC drivers
+/SistemaInventarioMarbal/lib/*.jar
+
+# VS Code workspace cache (opcional mantener .vscode/settings.json)
+/.classpath
+/.project
+/.settings/
