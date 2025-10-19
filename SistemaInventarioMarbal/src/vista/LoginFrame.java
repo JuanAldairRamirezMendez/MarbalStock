@@ -1,10 +1,8 @@
 package vista;
 
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * LoginFrame - Interfaz gráfica para autenticación de usuarios
@@ -126,7 +124,7 @@ public class LoginFrame extends JFrame {
 
         btnLogin = new JButton("Iniciar sesión");
         btnLogin.setBackground(new Color(40, 167, 69));
-        btnLogin.setForeground(Color.WHITE);
+        btnLogin.setForeground(Color.BLACK);
         btnLogin.setFocusPainted(false);
         btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 12));
         gbc.gridy = 3;
@@ -156,12 +154,7 @@ public class LoginFrame extends JFrame {
             btnLogin.setEnabled(false);
         }
 
-        btnLogin.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                authenticate();
-            }
-        });
+        btnLogin.addActionListener(e -> authenticate());
 
         pack();
         setLocationRelativeTo(null);

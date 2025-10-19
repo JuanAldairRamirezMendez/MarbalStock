@@ -1,5 +1,6 @@
 package vista;
 
+import controlador.ReporteController;
 import java.awt.*;
 import javax.swing.*;
 import modelo.Usuario;
@@ -190,9 +191,20 @@ public class MenuPrincipal extends JFrame {
     }
 
     private void abrirReportes() {
-        JOptionPane.showMessageDialog(this,
-                "Integración con ReporteController (Rufo Ferrel)\n" +
-                        "Módulo de Reportes - En desarrollo");
+        try {
+            ReporteController rc = new ReporteController();
+            java.util.List<java.util.Map<String, Object>> data = rc.generarReporteInventario(5);
+            if (data == null || data.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No hay datos de inventario para exportar.");
+                return;
+            }
+            String nombre = "reporte_inventario_" + java.time.LocalDate.now();
+            rc.exportarReporte(data, nombre, "CSV");
+            String ruta = new java.io.File(nombre + ".csv").getAbsolutePath();
+            JOptionPane.showMessageDialog(this, "Reporte exportado en:\n" + ruta, "Reporte de Inventario", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al generar/exportar reporte: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void abrirOrdenesCompra() {

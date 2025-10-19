@@ -1,12 +1,11 @@
 package vista;
 
+import controlador.ReporteController;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
@@ -21,8 +20,6 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
-import controlador.ReporteController; 
-
 public class ReporteFrame extends JFrame {
 
     // Asegurarse de tener estos imports para evitar "cannot be resolved to a type"
@@ -31,11 +28,11 @@ public class ReporteFrame extends JFrame {
 
     private JComboBox<String> cmbTipoReporte;
     private JButton btnGenerar;
-    private JButton btnExportarPdf;
+    private JButton btnExportar;
     private JTable tblReporte;
     private DefaultTableModel tableModel;
     
-    private ReporteController controller;
+    private final ReporteController controller;
     
     private List<Map<String, Object>> reporteDataActual; 
     private String nombreReporteActual = "ReporteGenerado";
@@ -96,13 +93,13 @@ public class ReporteFrame extends JFrame {
         btnGenerar.setPreferredSize(new Dimension(120, 30));
         panelControles.add(btnGenerar);
         
-        btnExportarPdf = new JButton("EXPORTAR A PDF");
-        btnExportarPdf.setBackground(new Color(46, 204, 113)); 
-        btnExportarPdf.setForeground(Color.WHITE);
-        btnExportarPdf.setFont(new Font("Arial", Font.BOLD, 12));
-        btnExportarPdf.setPreferredSize(new Dimension(150, 30));
-        btnExportarPdf.setEnabled(false);
-        panelControles.add(btnExportarPdf);
+    btnExportar = new JButton("EXPORTAR");
+    btnExportar.setBackground(new Color(46, 204, 113)); 
+    btnExportar.setForeground(Color.WHITE);
+    btnExportar.setFont(new Font("Arial", Font.BOLD, 12));
+    btnExportar.setPreferredSize(new Dimension(150, 30));
+    btnExportar.setEnabled(false);
+    panelControles.add(btnExportar);
         
         panelPrincipal.add(panelControles, BorderLayout.NORTH);
 
@@ -117,19 +114,8 @@ public class ReporteFrame extends JFrame {
     }
     
     private void setupListeners() {
-        btnGenerar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                generarReporteSeleccionado();
-            }
-        });
-        
-        btnExportarPdf.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                exportarReporteActual();
-            }
-        });
+    btnGenerar.addActionListener(e -> generarReporteSeleccionado());
+    btnExportar.addActionListener(e -> exportarReporteActual());
     }
 
     private void generarReporteSeleccionado() {
@@ -178,16 +164,16 @@ public class ReporteFrame extends JFrame {
             }
             
             mostrarDatosEnTabla(reporteDataActual);
-            btnExportarPdf.setEnabled(reporteDataActual != null && !reporteDataActual.isEmpty());
+            btnExportar.setEnabled(reporteDataActual != null && !reporteDataActual.isEmpty());
             
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Error: El umbral debe ser un número entero.", "ERROR DE ENTRADA", JOptionPane.ERROR_MESSAGE);
             reporteDataActual = null;
-            btnExportarPdf.setEnabled(false);
+            btnExportar.setEnabled(false);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al generar el reporte: " + ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
             reporteDataActual = null;
-            btnExportarPdf.setEnabled(false);
+            btnExportar.setEnabled(false);
         }
     }
 
@@ -200,7 +186,7 @@ public class ReporteFrame extends JFrame {
             return;
         }
         
-        String[] columns = data.get(0).keySet().toArray(new String[0]);
+    String[] columns = data.get(0).keySet().toArray(String[]::new);
         tableModel.setColumnIdentifiers(columns);
         
         for (Map<String, Object> row : data) {
@@ -214,11 +200,30 @@ public class ReporteFrame extends JFrame {
     
     private void exportarReporteActual() {
         if (reporteDataActual != null && !reporteDataActual.isEmpty()) {
-            controller.exportarReporte(reporteDataActual, nombreReporteActual, "PDF");
-            JOptionPane.showMessageDialog(this, 
-                "Exportación a PDF solicitada para el reporte '" + nombreReporteActual + "'.", 
-                "Exportación Exitosa", 
-                JOptionPane.INFORMATION_MESSAGE);
+            String[] opciones = {"CSV", "PDF", "XLSX"};
+            String formato = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Seleccione el formato de exportación:",
+                    "Exportar Reporte",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]
+            );
+            if (formato == null) return;
+            if ("CSV".equalsIgnoreCase(formato)) {
+                controller.exportarReporte(reporteDataActual, nombreReporteActual, "CSV");
+                JOptionPane.showMessageDialog(this,
+                    "Exportación a CSV realizada. Archivo: " + nombreReporteActual + ".csv",
+                    "Exportación Exitosa",
+                    JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                controller.exportarReporte(reporteDataActual, nombreReporteActual, formato);
+                JOptionPane.showMessageDialog(this,
+                    "El formato " + formato + " aún no está implementado. Intente con CSV.",
+                    "Función no disponible",
+                    JOptionPane.WARNING_MESSAGE);
+            }
         } else {
             JOptionPane.showMessageDialog(this, "No hay datos generados para exportar. Genere el reporte primero.", "Advertencia", JOptionPane.WARNING_MESSAGE);
         }

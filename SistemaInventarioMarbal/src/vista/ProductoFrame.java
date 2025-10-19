@@ -1,14 +1,12 @@
 package vista;
 
+import conexion.ConexionBD;
+import controlador.InventarioController;
+import java.awt.*;
+import java.sql.Connection;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import controlador.InventarioController;
 import modelo.Producto;
-import conexion.ConexionBD;
-import java.sql.Connection;
 
 /**
  * ProductoFrame - Interfaz gráfica para gestión de productos
@@ -142,8 +140,8 @@ public class ProductoFrame extends JFrame {
     private JTable tblProductos;
     private DefaultTableModel modeloTabla;
 
-    private InventarioController inventarioController;
-    private ConexionBD conexionBD;
+    private final InventarioController inventarioController;
+    private final ConexionBD conexionBD;
 
     public ProductoFrame() {
         // Inicializar controlador y conexión BD
@@ -228,40 +226,15 @@ public class ProductoFrame extends JFrame {
     }
 
     private void configurarEventos() {
-        btnGuardar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                guardarProducto();
-            }
-        });
+        btnGuardar.addActionListener(e -> guardarProducto());
 
-        btnModificar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                modificarProducto();
-            }
-        });
+        btnModificar.addActionListener(e -> modificarProducto());
 
-        btnEliminar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                eliminarProducto();
-            }
-        });
+        btnEliminar.addActionListener(e -> eliminarProducto());
 
-        btnLimpiar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                limpiarFormulario();
-            }
-        });
+        btnLimpiar.addActionListener(e -> limpiarFormulario());
 
-        btnCancelar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-            }
-        });
+        btnCancelar.addActionListener(e -> dispose());
 
         // Evento para seleccionar producto de la tabla
         tblProductos.getSelectionModel().addListSelectionListener(e -> {
@@ -275,11 +248,13 @@ public class ProductoFrame extends JFrame {
         try {
             Connection conexion = conexionBD.abrirConexion();
             if (conexion != null && !conexion.isClosed()) {
-                JOptionPane.showMessageDialog(this,
-                        "✓ Conexión a BD exitosa\n" +
-                                "Integración con ConexionBD.java (Juan Ramírez) - OK",
-                        "Prueba de Conexión",
-                        JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this,
+            """
+            ✓ Conexión a BD exitosa
+            Integración con ConexionBD.java (Juan Ramírez) - OK
+            """,
+            "Prueba de Conexión",
+            JOptionPane.INFORMATION_MESSAGE);
                 conexionBD.cerrarConexion();
             }
         } catch (Exception e) {

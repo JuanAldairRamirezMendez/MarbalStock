@@ -1,5 +1,7 @@
 import conexion.ConexionBD;
 import java.sql.Connection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import vista.LoginFrame;
@@ -62,6 +64,7 @@ import vista.LoginFrame;
  * @version 1.0
  */
 public class Main {
+    private static final Logger LOG = Logger.getLogger(Main.class.getName());
     
     /**
      * Método principal que inicia el Sistema de Inventario Marbal.
@@ -87,10 +90,14 @@ public class Main {
             // Mostrar diálogo de error en modo gráfico
             javax.swing.JOptionPane.showMessageDialog(
                 null,
-                "No se pudo conectar a la base de datos.\n\n" +
-                "Verifique que MySQL/MariaDB esté en ejecución\n" +
-                "y que el esquema 'marbal_inventario' esté creado.\n\n" +
-                "Consulte la consola para más detalles.",
+                """
+                No se pudo conectar a la base de datos.
+
+                Verifique que MySQL/MariaDB esté en ejecución
+                y que el esquema 'marbal_inventario' esté creado.
+
+                Consulte la consola para más detalles.
+                """,
                 "Error de Conexión - Sistema Marbal",
                 javax.swing.JOptionPane.ERROR_MESSAGE
             );
@@ -117,7 +124,7 @@ public class Main {
                 System.out.println("========================================\n");
             } catch (Exception e) {
                 System.err.println("❌ Error al iniciar la interfaz de usuario:");
-                e.printStackTrace();
+                LOG.log(Level.SEVERE, "Error al iniciar la interfaz de usuario", e);
                 System.exit(1);
             }
         });
@@ -130,10 +137,8 @@ public class Main {
      */
     private static boolean verificarConexionBD() {
         ConexionBD conexionBD = new ConexionBD();
-        Connection conn = null;
-        
         try {
-            conn = conexionBD.abrirConexion();
+            Connection conn = conexionBD.abrirConexion();
             
             if (conn != null && !conn.isClosed()) {
                 System.out.println("   → Conectado a: " + conn.getMetaData().getURL());
@@ -146,16 +151,14 @@ public class Main {
             
         } catch (Exception e) {
             System.err.println("   ❌ Error al conectar: " + e.getMessage());
-            e.printStackTrace();
+            LOG.log(Level.SEVERE, "Error al conectar a la base de datos", e);
             return false;
             
         } finally {
-            if (conexionBD != null) {
-                try {
-                    conexionBD.cerrarConexion();
-                } catch (Exception e) {
-                    // Ignorar errores al cerrar
-                }
+            try {
+                conexionBD.cerrarConexion();
+            } catch (Exception e) {
+                // Ignorar errores al cerrar
             }
         }
     }

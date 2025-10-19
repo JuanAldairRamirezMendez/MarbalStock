@@ -1,8 +1,8 @@
 package controlador;
 
-import modelo.Reporte;
 import java.util.List;
 import java.util.Map;
+import modelo.Reporte;
 
 /**
  * ReporteController - Controlador para generación de reportes
@@ -77,7 +77,7 @@ import java.util.Map;
 
 public class ReporteController {
 
-    private Reporte reporte;
+    private final Reporte reporte;
 
     public ReporteController() {
         // Inicializa el modelo Reporte
