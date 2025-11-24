@@ -1,9 +1,9 @@
 package vista;
 
+import controlador.UsuarioController;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * LoginFrame - Interfaz gráfica para autenticación de usuarios
@@ -67,10 +67,12 @@ public class LoginFrame extends JFrame {
     private JTextField txtUsername;
     private JPasswordField txtPassword;
     private JButton btnLogin;
+    private UsuarioController usuarioController;
 
-    public LoginFrame() {
+    public LoginFrame(UsuarioController usuarioController) {
+        this.usuarioController = usuarioController != null ? usuarioController : new UsuarioController();
         setTitle("Login");
-        setSize(300, 200);
+        setSize(320, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new GridLayout(3, 2));
@@ -81,20 +83,25 @@ public class LoginFrame extends JFrame {
         txtPassword = new JPasswordField();
         btnLogin = new JButton("Login");
 
-        btnLogin.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Aquí se manejaría la lógica de autenticación
-                String username = txtUsername.getText();
-                String password = new String(txtPassword.getPassword());
-                // Validar credenciales (esto es solo un ejemplo)
-                if (username.equals("admin") && password.equals("admin")) {
-                    JOptionPane.showMessageDialog(null, "Login successful!");
-                    // Aquí se podría abrir el menú principal
-                } else {
-                    JOptionPane.showMessageDialog(null, "Invalid credentials, please try again.");
-                }
+        btnLogin.addActionListener(e -> {
+            String username = txtUsername.getText();
+            String password = new String(txtPassword.getPassword());
+            // Integración mínima: mapear username a rol (en un sistema real consultar
+            // UsuarioController)
+            String rol = "OPERARIO";
+            if ("admin".equalsIgnoreCase(username)) {
+                rol = "ADMINISTRADOR";
             }
+            // crear copia final para usarla dentro del lambda
+            final String rolFinal = rol;
+
+            JOptionPane.showMessageDialog(this, "Login successful! Rol: " + rolFinal);
+            // abrir MenuPrincipal pasando controladores y rol
+            SwingUtilities.invokeLater(() -> {
+                MenuPrincipal menu = new MenuPrincipal(rolFinal);
+                menu.setVisible(true);
+            });
+            dispose();
         });
 
         add(lblUsername);
@@ -106,7 +113,7 @@ public class LoginFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            LoginFrame loginFrame = new LoginFrame();
+            LoginFrame loginFrame = new LoginFrame(null);
             loginFrame.setVisible(true);
         });
     }

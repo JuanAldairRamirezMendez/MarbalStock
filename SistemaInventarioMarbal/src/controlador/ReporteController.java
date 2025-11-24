@@ -25,26 +25,26 @@ import modelo.Reporte;
  * TIPOS DE REPORTES IMPLEMENTADOS:
  * 
  * 1. REPORTE DE INVENTARIO:
- *    - Stock actual de todos los productos
- *    - Productos en nivel crítico (stock < 5)
- *    - Valorización total del inventario
- *    - Productos más/menos rotados
+ * - Stock actual de todos los productos
+ * - Productos en nivel crítico (stock < 5)
+ * - Valorización total del inventario
+ * - Productos más/menos rotados
  * 
  * 2. REPORTE DE VENTAS:
- *    - Ventas por período (diario, semanal, mensual)
- *    - Ventas por cliente
- *    - Ventas por producto
- *    - Análisis de tendencias y proyecciones
+ * - Ventas por período (diario, semanal, mensual)
+ * - Ventas por cliente
+ * - Ventas por producto
+ * - Análisis de tendencias y proyecciones
  * 
  * 3. REPORTE DE CONSUMO DIARIO:
- *    - Registro de consumos del día
- *    - Comparación con límites permitidos (RF06)
- *    - Productos contratados vs adicionales (RF03)
+ * - Registro de consumos del día
+ * - Comparación con límites permitidos (RF06)
+ * - Productos contratados vs adicionales (RF03)
  * 
  * 4. REPORTE DE ÓRDENES DE COMPRA:
- *    - Órdenes pendientes de aprobación
- *    - Órdenes enviadas a proveedores
- *    - Órdenes completadas y recibidas
+ * - Órdenes pendientes de aprobación
+ * - Órdenes enviadas a proveedores
+ * - Órdenes completadas y recibidas
  * 
  * FORMATO DE VISUALIZACIÓN:
  * - JTable: Para reportes tabulares con múltiples registros
@@ -72,20 +72,36 @@ import modelo.Reporte;
  * @version 1.0
  */
 public class ReporteController {
-    
+
     private Reporte reporte;
 
     public ReporteController() {
         this.reporte = new Reporte();
     }
 
+    // Método que devuelve datos de venta_detalle en formato matricial (simulado)
+    public Object[][] listarVentasDetalle() {
+        // En una implementación real se consultaría la BD vía ConexionBD y se mapearía
+        // a objetos.
+        // Aquí devolvemos filas de ejemplo: {idVenta, fecha, producto, cantidad,
+        // precioUnit, subtotal}
+        return new Object[][] {
+                { 1, "2025-10-01 09:12", "Producto A", 10, 5.50, 55.00 },
+                { 2, "2025-10-02 11:30", "Producto B", 3, 12.00, 36.00 }
+        };
+    }
+
+    public String[] getColumnNamesVentaDetalle() {
+        return new String[] { "ID Venta", "Fecha", "Producto", "Cantidad", "Precio Unit.", "Subtotal" };
+    }
+
     public void generarReporte() {
-        // Lógica para generar el reporte
-        reporte.crearReporte();
+        // delegar a modelo si es necesario
+        reporte.generarReporteVentas();
     }
 
     public void exportarReporte(String formato) {
-        // Lógica para exportar el reporte en el formato especificado
-        reporte.exportar(formato);
+        // delegar a modelo o implementar export real
+        reporte.exportarReporte(formato);
     }
 }

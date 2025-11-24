@@ -1,5 +1,11 @@
 package vista;
 
+import controlador.InventarioController;
+import controlador.ReporteController;
+
+import javax.swing.*;
+import java.awt.*;
+
 /**
  * MenuPrincipal - Interfaz principal del sistema post-autenticación
  * 
@@ -26,7 +32,7 @@ package vista;
  * 
  * MODELOS (Keila Mateo):
  * - Producto.java
- * - Proveedor.java  
+ * - Proveedor.java
  * - Cliente.java
  * - Venta.java
  * - Usuario.java
@@ -97,10 +103,64 @@ package vista;
  * @author Diego García
  * @version 1.0
  */
-public class MenuPrincipal {
+public class MenuPrincipal extends JFrame {
+    private String rol;
+    private InventarioController inventarioController;
+    private ReporteController reporteController;
+
+    public MenuPrincipal(String rol) {
+        this.rol = rol;
+        this.inventarioController = new InventarioController();
+        this.reporteController = new ReporteController();
+
+        setTitle("Menu Principal - Marbal");
+        setSize(400, 200);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        initialize();
+    }
+
+    private void initialize() {
+        JPanel panel = new JPanel(new GridLayout(2, 2, 8, 8));
+
+        JButton btnGestionProductos = new JButton("Gestión Inventario");
+        JButton btnReportes = new JButton("Reportes");
+        JButton btnUsuarios = new JButton("Gestión Usuarios");
+        JButton btnSalir = new JButton("Salir");
+
+        btnGestionProductos.addActionListener(e -> {
+            ProductoFrame pf = new ProductoFrame(inventarioController);
+            pf.setVisible(true);
+        });
+
+        btnReportes.addActionListener(e -> {
+            ReporteFrame rf = new ReporteFrame(reporteController);
+            rf.setVisible(true);
+        });
+
+        btnUsuarios.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Función Gestión Usuarios (pendiente)");
+        });
+
+        btnSalir.addActionListener(e -> System.exit(0));
+
+        // permisos simples por rol
+        btnUsuarios.setEnabled("ADMINISTRADOR".equalsIgnoreCase(rol));
+        btnGestionProductos.setEnabled(true);
+        btnReportes.setEnabled(true);
+
+        panel.add(btnGestionProductos);
+        panel.add(btnReportes);
+        panel.add(btnUsuarios);
+        panel.add(btnSalir);
+
+        add(panel);
+    }
+
     public static void main(String[] args) {
-        // Aquí se puede inicializar la interfaz gráfica del menú principal
-        System.out.println("Bienvenido al Sistema de Inventario Marbal");
-        // Lógica para mostrar el menú principal
+        SwingUtilities.invokeLater(() -> {
+            MenuPrincipal mp = new MenuPrincipal("OPERARIO");
+            mp.setVisible(true);
+        });
     }
 }
