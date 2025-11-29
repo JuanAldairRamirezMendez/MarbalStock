@@ -89,6 +89,31 @@ public class ConexionBD {
                 System.err.println("Advertencia: driver JDBC no encontrado: " + this.driver);
             }
 
+            // Si la URL viene de propiedades y es MySQL, asegurar que permita
+            // la recuperación de clave pública para evitar el error en CI:
+            // "Public Key Retrieval is not allowed" cuando se usa
+            // autenticación caching_sha2_password.
+            if (this.url != null && this.url.trim().toLowerCase().startsWith("jdbc:mysql:")) {
+                String u = this.url;
+                if (!u.contains("allowPublicKeyRetrieval")) {
+                    if (u.contains("?")) {
+                        u = u + "&allowPublicKeyRetrieval=true";
+                    } else {
+                        u = u + "?allowPublicKeyRetrieval=true";
+                    }
+                }
+                // Asegurar al menos un valor de serverTimezone para evitar warnings
+                if (!u.contains("serverTimezone")) {
+                    if (u.contains("?")) {
+                        u = u + "&serverTimezone=UTC";
+                    } else {
+                        u = u + "?serverTimezone=UTC";
+                    }
+                }
+                // Conservar la URL modificada
+                this.url = u;
+            }
+
         }
         if (!loaded) {
             System.err.println("No se pudo leer recursos/config/db.properties. Usando valores por defecto.");
