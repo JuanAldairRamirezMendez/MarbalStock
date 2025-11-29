@@ -146,3 +146,27 @@ BEGIN
         ALTER TABLE alertas_reparto ADD COLUMN creado_por VARCHAR(150);
     END IF;
 END$$;
+
+-- Idempotent conversion: usuarios.activo smallint -> boolean
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name='usuarios' AND column_name='activo'
+    ) THEN
+        -- sólo convertir si el tipo actual es smallint (no tocar si ya es boolean)
+        IF (SELECT data_type FROM information_schema.columns
+                WHERE table_name='usuarios' AND column_name='activo') = 'smallint' THEN
+
+            -- add temporal boolean column (if not exists)
+            ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS activo_bool BOOLEAN;
+
+            -- migrate values (treat non-zero as true)
+            UPDATE usuarios SET activo_bool = (activo <> 0);
+
+            -- drop old column and rename new
+            ALTER TABLE usuarios DROP COLUMN IF EXISTS activo;
+            ALTER TABLE usuarios RENAME COLUMN activo_bool TO activo;
+        END IF;
+    END IF;
+END$$;
