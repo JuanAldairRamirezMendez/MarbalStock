@@ -149,13 +149,14 @@ public class UsuarioController {
             String salt = java.util.UUID.randomUUID().toString().replaceAll("-", "");
             String hash = SecurityUtil.sha256Hex(salt + password);
 
-            String insert = "INSERT INTO usuarios (nombre, username, password_hash, salt, rol, activo) VALUES (?, ?, ?, ?, ?, 1)";
+            String insert = "INSERT INTO usuarios (nombre, username, password_hash, salt, rol, activo) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(insert)) {
                 ps.setString(1, nombre == null ? username : nombre);
                 ps.setString(2, username);
                 ps.setString(3, hash);
                 ps.setString(4, salt);
                 ps.setString(5, rol == null ? "OPERARIO" : rol);
+                ps.setBoolean(6, true);
                 int affected = ps.executeUpdate();
                 if (affected > 0) {
                     lastErrorMessage = null;

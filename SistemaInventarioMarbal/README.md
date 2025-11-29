@@ -1,6 +1,6 @@
 # Sistema Inventario Marbal
 
-Este proyecto es un sistema de gestión de inventario que permite a los usuarios gestionar productos, proveedores, clientes y ventas de manera eficiente. A continuación se detallan las características y la estructura del proyecto.
+Este proyecto es un sistema de spring.datasource.password=TuPassSegura123. A continuación se detallan las características y la estructura del proyecto.
 
 ## Estructura del Proyecto
 
@@ -116,17 +116,10 @@ public class Producto {
 ```
 
 ### 6.2 Controlador
-
-```java
+ Persistencia por JDBC (PostgreSQL configurado por defecto en `recursos/bd/script_bd.sql`).
 public class ProductoController {
-    private ProductoDAO dao;
-
     public ProductoController() {
         this.dao = new ProductoDAO();
-    }
-
-    public void registrarProducto(Producto p) {
-        dao.insertar(p);
     }
 }
 ```
@@ -149,8 +142,7 @@ public class ProductoVista extends JFrame {
 
 ---
 
-## 7. Guía de Uso de MVC en tu Proyecto
-
+ - El JAR incluye las dependencias (PostgreSQL JDBC incluido). No hace falta copiar manualmente el connector.
 1. Nunca mezclar lógica con interfaz.
 2. La base de datos se accede solo desde el Modelo o DAO.
 # Sistema Inventario Marbal

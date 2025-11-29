@@ -296,6 +296,10 @@ public class ProductoFrame extends JFrame {
         btnGuardar = crearBotonEstilizado("Guardar");
         btnRecalcular = crearBotonEstilizado("Recalcular algoritmos");
         btnCancelar = crearBotonEstilizado("Cancelar");
+        // Ocultar botones que causaban artefactos visuales en hover
+        btnRecalcular.setVisible(false);
+        btnGuardar.setVisible(false);
+        btnCancelar.setVisible(false);
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
         botones.add(btnRecalcular);
         botones.add(btnGuardar);

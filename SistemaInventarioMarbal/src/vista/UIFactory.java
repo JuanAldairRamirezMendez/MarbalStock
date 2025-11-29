@@ -16,8 +16,11 @@ public class UIFactory {
                 super.paintComponent(g);
             }
         };
+        // Pintamos el fondo redondeado en paintComponent pero mantenemos el botón opaco
+        // para que no se muestren componentes subyacentes al hacer hover.
         boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
+        boton.setOpaque(true);
+        boton.setBorderPainted(false);
         if (width > 0 && height > 0) boton.setPreferredSize(new Dimension(width, height));
         boton.setFont(UIConstants.BUTTON_FONT);
         boton.setBackground(bg == null ? UIConstants.PRIMARY : bg);
@@ -26,37 +29,9 @@ public class UIFactory {
         boton.setBorder(new RoundedBorder(UIConstants.BUTTON_RADIUS, UIConstants.PRIMARY_DARK));
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         boton.setMargin(new Insets(6, 12, 6, 12));
-        // efecto hover y pressed
-        Color base = boton.getBackground();
-        Color hover = base.brighter();
-        Color pressed = base.darker();
-        boton.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                boton.setBackground(hover);
-                boton.repaint();
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                boton.setBackground(base);
-                boton.repaint();
-            }
-
-            @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
-                boton.setBackground(pressed);
-                boton.repaint();
-            }
-
-            @Override
-            public void mouseReleased(java.awt.event.MouseEvent e) {
-                // restaurar hover o base según posición
-                if (boton.contains(e.getPoint())) boton.setBackground(hover);
-                else boton.setBackground(base);
-                boton.repaint();
-            }
-        });
+        // No hover/pressed effects: dejar botón estable para evitar mostrar elementos subyacentes.
+        // Se mantiene el pintado personalizado en paintComponent, pero no cambiaremos el fondo
+        // dinámicamente al pasar el cursor.
 
         return boton;
     }

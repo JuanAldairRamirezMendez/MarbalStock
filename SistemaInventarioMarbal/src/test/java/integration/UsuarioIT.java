@@ -25,11 +25,11 @@ public class UsuarioIT {
         System.setProperty("db.props", PROPS_PATH);
         cfg.getParentFile().mkdirs();
         try (FileWriter fw = new FileWriter(cfg)) {
-            fw.write("db.type=mysql\n");
-            fw.write("db.url=jdbc:mysql://127.0.0.1:3306/marbal_test?useSSL=false&serverTimezone=UTC\n");
+            fw.write("db.type=postgresql\n");
+            fw.write("db.url=jdbc:postgresql://127.0.0.1:5432/marbal_test\n");
             fw.write("db.user=root\n");
             fw.write("db.password=root\n");
-            fw.write("db.driver=com.mysql.cj.jdbc.Driver\n");
+            fw.write("db.driver=org.postgresql.Driver\n");
         }
 
         // create minimal table if not exists
@@ -37,13 +37,13 @@ public class UsuarioIT {
         Connection conn = cb.abrirConexion();
         try (Statement st = conn.createStatement()) {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS usuarios (" +
-                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "id SERIAL PRIMARY KEY, " +
                     "nombre VARCHAR(100), " +
                     "username VARCHAR(100) UNIQUE, " +
                     "password_hash VARCHAR(255), " +
                     "salt VARCHAR(255), " +
                     "rol VARCHAR(50), " +
-                    "activo TINYINT DEFAULT 1) ENGINE=InnoDB;");
+                    "activo SMALLINT DEFAULT 1);");
         }
         cb.cerrarConexion();
     }

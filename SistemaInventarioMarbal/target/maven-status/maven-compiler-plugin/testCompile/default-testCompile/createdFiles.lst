@@ -1,2 +1,4 @@
 controlador\SecurityUtilTest.class
 integration\UsuarioIT.class
+ProductoAsignacionIT.class
+integration\DBConnectionIT.class

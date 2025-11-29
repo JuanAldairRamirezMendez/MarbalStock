@@ -1,6 +1,8 @@
 package controlador;
 
 import modelo.Reporte;
+import java.util.ArrayList;
+import modelo.Producto;
 
 /**
  * ReporteController - Controlador para generación de reportes
@@ -78,26 +80,54 @@ public class ReporteController {
     public ReporteController() {
         this.reporte = new Reporte();
     }
-
-    // Método que devuelve datos de venta_detalle en formato matricial (simulado)
-    public Object[][] listarVentasDetalle() {
-        // En una implementación real se consultaría la BD vía ConexionBD y se mapearía
-        // a objetos.
-        // Aquí devolvemos filas de ejemplo: {idVenta, fecha, producto, cantidad,
-        // precioUnit, subtotal}
-        return new Object[][] {
-                { 1, "2025-10-01 09:12", "Producto A", 10, 5.50, 55.00 },
-                { 2, "2025-10-02 11:30", "Producto B", 3, 12.00, 36.00 }
-        };
+    /** Devuelve un reporte tabular del inventario actual (consultando InventarioController). */
+    public Object[][] listarInventario() {
+        InventarioController inv = new InventarioController();
+        ArrayList<Producto> productos = inv.listarProductos();
+        Object[][] rows = new Object[productos.size()][];
+        for (int i = 0; i < productos.size(); i++) {
+            Producto p = productos.get(i);
+            rows[i] = new Object[] { p.getId(), p.getCodigo(), p.getNombre(), p.getTipo(), p.getStock(), p.getPrecioVenta(), p.getIdProveedor() };
+        }
+        return rows;
     }
 
-    public String[] getColumnNamesVentaDetalle() {
-        return new String[] { "ID Venta", "Fecha", "Producto", "Cantidad", "Precio Unit.", "Subtotal" };
+    public String[] getColumnNamesInventario() {
+        return new String[] { "ID", "Código", "Nombre", "Tipo", "Stock", "Precio Venta", "Proveedor ID" };
+    }
+
+    /**
+     * Lista inventario filtrado por umbral de stock (productos con stock < stockThreshold)
+     * y/o por idProveedor. Si un parámetro es null se ignora ese filtro.
+     */
+    public Object[][] listarInventarioFiltrado(Integer stockThreshold, Integer idProveedor) {
+        InventarioController inv = new InventarioController();
+        ArrayList<Producto> productos = inv.listarProductos();
+        ArrayList<Object[]> rows = new ArrayList<>();
+        for (Producto p : productos) {
+            boolean pasa = true;
+            if (stockThreshold != null) {
+                if (!(p.getStock() < stockThreshold)) {
+                    pasa = false;
+                }
+            }
+            if (idProveedor != null) {
+                if (p.getIdProveedor() != idProveedor.intValue()) {
+                    pasa = false;
+                }
+            }
+            if (pasa) {
+                rows.add(new Object[] { p.getId(), p.getCodigo(), p.getNombre(), p.getTipo(), p.getStock(), p.getPrecioVenta(), p.getIdProveedor() });
+            }
+        }
+        Object[][] result = new Object[rows.size()][];
+        for (int i = 0; i < rows.size(); i++) result[i] = rows.get(i);
+        return result;
     }
 
     public void generarReporte() {
-        // delegar a modelo si es necesario
-        reporte.generarReporteVentas();
+        // delegar a modelo si es necesario (reporte de productos/inventario)
+        reporte.generarReporteProductos();
     }
 
     public void exportarReporte(String formato) {

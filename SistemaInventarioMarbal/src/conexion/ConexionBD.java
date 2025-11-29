@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * ConexionBD - Clase de conexión a la base de datos MySQL
+ * ConexionBD - Clase de conexión a la base de datos (ahora PostgreSQL por defecto)
  * 
  * SISTEMA DE INVENTARIO MARBAL - Inversiones Comerciales Marbal E.I.R.L.
  * Proyecto académico - Análisis y Diseño de Sistemas de Información
@@ -26,9 +26,9 @@ import java.util.Properties;
  * a la base de datos MySQL del sistema de inventario. Permite centralizar
  * toda la información en una base de datos relacional (RF09).
  * 
- * BASE DE DATOS: MySQL
- * PUERTO: 3306
- * ESQUEMA: marbal_inventario
+ * BASE DE DATOS: PostgreSQL
+ * PUERTO: 5432
+ * ESQUEMA: inventario_marbal
  * 
  * FECHA: Octubre 2025
  * CURSO: Sección 40833
@@ -90,51 +90,28 @@ public class ConexionBD {
             if ((this.driver == null || this.driver.isEmpty())) {
                 if ("postgresql".equals(type)) {
                     this.driver = "org.postgresql.Driver";
-                } else {
+                } else if ("mysql".equals(type)) {
                     this.driver = "com.mysql.cj.jdbc.Driver";
+                } else {
+                    // por defecto usar PostgreSQL
+                    this.driver = "org.postgresql.Driver";
                 }
             }
 
             try {
                 Class.forName(this.driver);
             } catch (ClassNotFoundException e) {
-                // driver no disponible en CLASSPATH, seguirá DriverManager si el driver está instalado
                 System.err.println("Advertencia: driver JDBC no encontrado: " + this.driver);
-            }
-
-            // Si la URL viene de propiedades y es MySQL, asegurar que permita
-            // la recuperación de clave pública para evitar el error en CI:
-            // "Public Key Retrieval is not allowed" cuando se usa
-            // autenticación caching_sha2_password.
-            if (this.url != null && this.url.trim().toLowerCase().startsWith("jdbc:mysql:")) {
-                String u = this.url;
-                if (!u.contains("allowPublicKeyRetrieval")) {
-                    if (u.contains("?")) {
-                        u = u + "&allowPublicKeyRetrieval=true";
-                    } else {
-                        u = u + "?allowPublicKeyRetrieval=true";
-                    }
-                }
-                // Asegurar al menos un valor de serverTimezone para evitar warnings
-                if (!u.contains("serverTimezone")) {
-                    if (u.contains("?")) {
-                        u = u + "&serverTimezone=UTC";
-                    } else {
-                        u = u + "?serverTimezone=UTC";
-                    }
-                }
-                // Conservar la URL modificada
-                this.url = u;
             }
 
         }
         if (!loaded) {
-            System.err.println("No se pudo leer recursos/config/db.properties. Usando valores por defecto.");
-            // valores por defecto razonables
-            this.url = "jdbc:mysql://localhost:3306/inventario_marbal?useSSL=false&serverTimezone=UTC";
-            this.usuario = "root";
-            this.password = "";
-            this.driver = "com.mysql.cj.jdbc.Driver";
+            System.err.println("No se pudo leer recursos/config/db.properties. Usando valores por defecto (PostgreSQL).");
+            // valores por defecto razonables para PostgreSQL (actualizados)
+            this.url = "jdbc:postgresql://localhost:5440/inventario_marbal";
+            this.usuario = "marbal";
+            this.password = "TuPassSegura123";
+            this.driver = "org.postgresql.Driver";
         }
     }
 

@@ -16,7 +16,7 @@ public class ReporteFrame extends JFrame {
 
     public ReporteFrame(ReporteController reporteController) {
         this.reporteController = reporteController;
-        setTitle("Reportes - Detalle de Ventas");
+        setTitle("Reportes - Inventario");
         setSize(900, 500);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -42,9 +42,24 @@ public class ReporteFrame extends JFrame {
         right.add(btnImprimir);
         panelTitulo.add(right, BorderLayout.EAST);
 
-        //tabla
-        String[] cols = reporteController.getColumnNamesVentaDetalle();
-        Object[][] data = reporteController.listarVentasDetalle();
+        // Controles de filtrado: Stock < X y Proveedor ID
+        JPanel panelFiltros = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        panelFiltros.setOpaque(false);
+        panelFiltros.setBorder(BorderFactory.createEmptyBorder(6, 20, 0, 20));
+        panelFiltros.add(new JLabel("Stock <"));
+        JTextField txtStock = new JTextField(6);
+        panelFiltros.add(txtStock);
+        panelFiltros.add(new JLabel("Proveedor ID:"));
+        JTextField txtProveedor = new JTextField(6);
+        panelFiltros.add(txtProveedor);
+        JButton btnFiltrar = UIFactory.createRoundedButton("Filtrar", UIConstants.SECONDARY_BUTTON, Color.WHITE, 100, 30);
+        JButton btnLimpiar = UIFactory.createRoundedButton("Limpiar", UIConstants.SECONDARY_BUTTON, Color.WHITE, 100, 30);
+        panelFiltros.add(btnFiltrar);
+        panelFiltros.add(btnLimpiar);
+
+        //tabla (informe de inventario)
+        String[] cols = reporteController.getColumnNamesInventario();
+        Object[][] data = reporteController.listarInventario();
         DefaultTableModel model = new DefaultTableModel(data, cols) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -86,7 +101,54 @@ public class ReporteFrame extends JFrame {
         JPanel panelPrincipal = new JPanel(new BorderLayout());
         panelPrincipal.setBackground(Color.WHITE);
         panelPrincipal.add(panelTitulo, BorderLayout.NORTH);
-        panelPrincipal.add(scroll, BorderLayout.CENTER);
+        // agregar panel de filtros arriba de la tabla
+        JPanel center = new JPanel(new BorderLayout());
+        center.setBackground(Color.WHITE);
+        center.add(panelFiltros, BorderLayout.NORTH);
+        center.add(scroll, BorderLayout.CENTER);
+        // acciones de filtrado
+        btnFiltrar.addActionListener(e -> {
+            Integer stockThreshold = null;
+            Integer proveedorId = null;
+            String sStock = txtStock.getText().trim();
+            String sProv = txtProveedor.getText().trim();
+            if (!sStock.isEmpty()) {
+                try {
+                    stockThreshold = Integer.valueOf(sStock);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "El valor de 'Stock' debe ser un número entero.", "Entrada inválida", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+            if (!sProv.isEmpty()) {
+                try {
+                    proveedorId = Integer.valueOf(sProv);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "El valor de 'Proveedor ID' debe ser un número entero.", "Entrada inválida", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+            Object[][] filtered = reporteController.listarInventarioFiltrado(stockThreshold, proveedorId);
+            String[] colsFiltered = reporteController.getColumnNamesInventario();
+            DefaultTableModel modelFiltered = new DefaultTableModel(filtered, colsFiltered) {
+                @Override
+                public boolean isCellEditable(int row, int col) { return false; }
+            };
+            tblReporte.setModel(modelFiltered);
+        });
+
+        btnLimpiar.addActionListener(e -> {
+            txtStock.setText("");
+            txtProveedor.setText("");
+            Object[][] all = reporteController.listarInventario();
+            String[] colsAll = reporteController.getColumnNamesInventario();
+            DefaultTableModel modelAll = new DefaultTableModel(all, colsAll) {
+                @Override
+                public boolean isCellEditable(int row, int col) { return false; }
+            };
+            tblReporte.setModel(modelAll);
+        });
+        panelPrincipal.add(center, BorderLayout.CENTER);
         panelPrincipal.add(firmaPanel, BorderLayout.SOUTH);
 
         add(panelPrincipal);

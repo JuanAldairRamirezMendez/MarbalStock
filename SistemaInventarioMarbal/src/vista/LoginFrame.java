@@ -6,6 +6,7 @@ import modelo.Usuario;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 /**
  * LoginFrame - Interfaz gráfica para autenticación de usuarios
@@ -74,78 +75,77 @@ public class LoginFrame extends JFrame {
 
     public LoginFrame(UsuarioController usuarioController) {
         this.usuarioController = usuarioController != null ? usuarioController : new UsuarioController();
-
         setTitle("Sistema de Inventario MARBAL - Iniciar Sesión");
-        setSize(520, 320);
+        setSize(420, 520);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        /* ========== DISEÑO CELESTE (estilo similar a capturas) ========== */
+        // Diseño simplificado según captura: encabezado turquesa, icono y formulario centrado
         JPanel panelPrincipal = new JPanel(new BorderLayout());
         panelPrincipal.setBackground(UIConstants.BACKGROUND);
 
-        // Panel del encabezado (azul con nombre MARBAL)
+        // Encabezado turquesa con texto centrado
         JPanel panelEncabezado = new JPanel(new BorderLayout());
-        panelEncabezado.setBackground(UIConstants.HEADER);
-        panelEncabezado.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        panelEncabezado.setBackground(UIConstants.PRIMARY);
+        panelEncabezado.setPreferredSize(new Dimension(320, 60));
+        JLabel titulo = new JLabel("INICIO DE SESIÓN", SwingConstants.CENTER);
+        titulo.setForeground(Color.WHITE);
+        titulo.setFont(UIConstants.SECTION_FONT);
+        panelEncabezado.add(titulo, BorderLayout.CENTER);
 
-        JLabel lblMarca = new JLabel("MARBAL", SwingConstants.CENTER);
-        lblMarca.setFont(UIConstants.TITLE_FONT);
-        lblMarca.setForeground(UIConstants.PANEL_BG);
-        panelEncabezado.add(lblMarca, BorderLayout.CENTER);
+        // Panel central con icono y campos
+        JPanel centro = new JPanel();
+        centro.setBackground(UIConstants.PANEL_BG);
+        centro.setLayout(new BoxLayout(centro, BoxLayout.Y_AXIS));
+        centro.setBorder(BorderFactory.createEmptyBorder(18, 28, 18, 28));
 
-        JLabel lblSub = new JLabel("Sistema de Control de Inventario", SwingConstants.CENTER);
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSub.setForeground(UIConstants.HEADER_SUB);
-        panelEncabezado.add(lblSub, BorderLayout.SOUTH);
-
-        // Panel del formulario
-        JPanel panelForm = new JPanel();
-        panelForm.setBackground(UIConstants.PANEL_BG);
-        panelForm.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
-        panelForm.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JLabel lock = new JLabel(createLockIcon(64));
+        lock.setPreferredSize(new Dimension(64,64));
+        lock.setHorizontalAlignment(SwingConstants.CENTER);
+        lock.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centro.add(lock);
+        centro.add(Box.createRigidArea(new Dimension(0, 14)));
 
         // Usuario
-        JLabel lblUsuario = new JLabel("Usuario (Email):");
-        txtUsername = new JTextField(15);
+        JLabel lblUsuario = new JLabel("Usuario");
+        lblUsuario.setForeground(UIConstants.PRIMARY);
+        lblUsuario.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblUsuario.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centro.add(lblUsuario);
+        centro.add(Box.createRigidArea(new Dimension(0, 6)));
+        txtUsername = new JTextField();
         estilizarCampo(txtUsername);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panelForm.add(lblUsuario, gbc);
-
-        gbc.gridx = 1;
-        panelForm.add(txtUsername, gbc);
+        txtUsername.setMaximumSize(new Dimension(240, 34));
+        txtUsername.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centro.add(txtUsername);
+        centro.add(Box.createRigidArea(new Dimension(0, 12)));
 
         // Contraseña
-        JLabel lblContrasena = new JLabel("Contraseña:");
-        txtPassword = new JPasswordField(15);
+        JLabel lblContrasena = new JLabel("Contraseña");
+        lblContrasena.setForeground(UIConstants.PRIMARY);
+        lblContrasena.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblContrasena.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centro.add(lblContrasena);
+        centro.add(Box.createRigidArea(new Dimension(0, 6)));
+        txtPassword = new JPasswordField();
         estilizarCampo(txtPassword);
+        txtPassword.setMaximumSize(new Dimension(240, 34));
+        txtPassword.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centro.add(txtPassword);
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panelForm.add(lblContrasena, gbc);
+        centro.add(Box.createRigidArea(new Dimension(0, 18)));
 
-        gbc.gridx = 1;
-        panelForm.add(txtPassword, gbc);
+        // Botones
+        btnLogin = UIFactory.createRoundedButton("Iniciar", UIConstants.SECONDARY_BUTTON, UIConstants.TEXT_PRIMARY, 120, 34);
+        btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centro.add(btnLogin);
+        centro.add(Box.createRigidArea(new Dimension(0, 8)));
+        JButton btnRegistrar = UIFactory.createRoundedButton("Registrarse", UIConstants.SECONDARY_BUTTON, UIConstants.TEXT_PRIMARY, 120, 34);
+        btnRegistrar.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centro.add(btnRegistrar);
 
-        // Botones (usar UIFactory para consistencia)
-        btnLogin = UIFactory.createRoundedButton("Iniciar Sesión", UIConstants.PRIMARY, Color.WHITE, 0, 34);
-        JButton btnRegistrar = UIFactory.createRoundedButton("Registrarse", UIConstants.SECONDARY_BUTTON, Color.DARK_GRAY, 0, 34);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        panelForm.add(btnLogin, gbc);
-
-        gbc.gridx = 1;
-        panelForm.add(btnRegistrar, gbc);
-
-        // Acción del botón (autenticación real)
+        // Ensamblar
         btnLogin.addActionListener(e -> {
             String username = txtUsername.getText().trim();
             String password = new String(txtPassword.getPassword());
@@ -183,18 +183,57 @@ public class LoginFrame extends JFrame {
             dlg.setVisible(true);
         });
 
-        // Ensamblar todo
-            panelPrincipal.add(panelEncabezado, BorderLayout.NORTH);
-        panelPrincipal.add(panelForm, BorderLayout.CENTER);
+        panelPrincipal.add(panelEncabezado, BorderLayout.NORTH);
+        panelPrincipal.add(centro, BorderLayout.CENTER);
 
         add(panelPrincipal);
     }
 
     private void estilizarCampo(JTextField campo) {
-        campo.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, UIConstants.TEXT_SECONDARY),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        campo.setBackground(UIConstants.PANEL_BG);
+        campo.setOpaque(true);
+        campo.setBackground(new Color(250,250,252));
+        campo.setBorder(new RoundedBorder(10, UIConstants.TEXT_SECONDARY));
+        campo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        campo.setPreferredSize(new Dimension(240, 34));
+    }
+
+    // Crear icono de candado programáticamente para evitar recorte de emoji
+    private ImageIcon createLockIcon(int size) {
+        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            // fondo transparente
+            g.setComposite(AlphaComposite.Src);
+            g.setColor(new Color(0,0,0,0));
+            g.fillRect(0,0,size,size);
+
+            // dibujar candado
+            int pad = Math.max(6, size/10);
+            int bodyW = size - pad*2;
+            int bodyH = (int)(bodyW * 0.6);
+            int bodyX = pad;
+            int bodyY = size - pad - bodyH;
+
+            // cuerpo
+            g.setColor(new Color(60,60,60));
+            g.fillRoundRect(bodyX, bodyY, bodyW, bodyH, 8, 8);
+            g.setColor(Color.WHITE);
+            g.fillRect(bodyX + bodyW/2 - 6, bodyY + bodyH/3, 12, bodyH/3);
+
+            // aro
+            g.setColor(new Color(60,60,60));
+            Stroke old = g.getStroke();
+            g.setStroke(new BasicStroke(Math.max(3, size/24), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            int arcW = bodyW/2;
+            int arcX = bodyX + (bodyW - arcW)/2;
+            int arcY = bodyY - arcW/2;
+            g.drawArc(arcX, arcY, arcW, arcW, 0, 180);
+            g.setStroke(old);
+        } finally {
+            g.dispose();
+        }
+        return new ImageIcon(img);
     }
 
     public static void main(String[] args) {

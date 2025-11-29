@@ -4,9 +4,10 @@ import java.awt.*;
 
 public class UIConstants {
     // Colores
-    public static final Color PRIMARY = new Color(72,133,237); // #4885ED
-    public static final Color PRIMARY_DARK = new Color(60,120,215);
-    public static final Color HEADER = new Color(22,83,132);
+    // Color primario actualizado a un tono más llamativo (naranja vibrante)
+    public static final Color PRIMARY = new Color(255,140,0); // naranja vibrante
+    public static final Color PRIMARY_DARK = new Color(230,115,0);
+    public static final Color HEADER = new Color(200,80,0);
     public static final Color BACKGROUND = new Color(245,247,250);
     public static final Color PANEL_BG = Color.WHITE;
     public static final Color TEXT_PRIMARY = new Color(34,34,34);
