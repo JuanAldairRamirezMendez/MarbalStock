@@ -153,67 +153,123 @@ public class ProductoFrame extends JFrame {
     }
 
     private void initializeComponents() {
-    // panel superior: formulario con borde y GridBagLayout
-    JPanel form = new JPanel(new GridBagLayout());
-    form.setBorder(BorderFactory.createTitledBorder("Datos del Producto"));
-    GridBagConstraints c = new GridBagConstraints();
-    c.insets = new Insets(6,6,6,6);
-    c.anchor = GridBagConstraints.WEST;
-    c.fill = GridBagConstraints.HORIZONTAL;
+        // Panel principal con fondo blanco
+        JPanel panelPrincipal = new JPanel(new BorderLayout());
+        panelPrincipal.setBackground(Color.WHITE);
 
-    c.gridx = 0; c.gridy = 0; form.add(new JLabel("Codigo:"), c);
-    c.gridx = 1; c.weightx = 1.0; txtCodigo = new JTextField(); txtCodigo.setPreferredSize(new Dimension(160,24)); form.add(txtCodigo, c);
+        // Panel del título celeste
+        JPanel panelTitulo = new JPanel();
+        panelTitulo.setBackground(new Color(0, 123, 255));
+        panelTitulo.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
 
-    c.gridx = 2; c.weightx = 0; form.add(new JLabel("Nombre:"), c);
-    c.gridx = 3; c.weightx = 1.0; txtNombre = new JTextField(); form.add(txtNombre, c);
+        JLabel lblTitulo = new JLabel("Datos del Producto", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitulo.setForeground(Color.WHITE);
+        panelTitulo.add(lblTitulo);
 
-    c.gridx = 0; c.gridy = 1; c.weightx = 0; form.add(new JLabel("Tipo:"), c);
-    c.gridx = 1; cmbTipo = new JComboBox<>(new String[]{"CONTRATADO","ADICIONAL"}); form.add(cmbTipo, c);
+        // Panel del formulario con GridBagLayout
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(Color.WHITE);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(6, 6, 6, 6);
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
 
-    c.gridx = 2; form.add(new JLabel("Precio Costo:"), c);
-    c.gridx = 3; txtPrecioCosto = new JTextField(); form.add(txtPrecioCosto, c);
+        c.gridx = 0;
+        c.gridy = 0;
+        form.add(new JLabel("Código:"), c);
+        c.gridx = 1;
+        c.weightx = 1.0;
+        txtCodigo = new JTextField();
+        txtCodigo.setPreferredSize(new Dimension(160, 24));
+        form.add(txtCodigo, c);
 
-    c.gridx = 0; c.gridy = 2; form.add(new JLabel("Precio Venta:"), c);
-    c.gridx = 1; txtPrecioVenta = new JTextField(); form.add(txtPrecioVenta, c);
+        c.gridx = 2;
+        c.weightx = 0;
+        form.add(new JLabel("Nombre:"), c);
+        c.gridx = 3;
+        c.weightx = 1.0;
+        txtNombre = new JTextField();
+        form.add(txtNombre, c);
 
-    c.gridx = 2; form.add(new JLabel("Stock Mínimo:"), c);
-    c.gridx = 3; txtStockMinimo = new JTextField("5"); form.add(txtStockMinimo, c);
+        c.gridx = 0;
+        c.gridy = 1;
+        c.weightx = 0;
+        form.add(new JLabel("Tipo:"), c);
+        c.gridx = 1;
+        cmbTipo = new JComboBox<>(new String[] { "CONTRATADO", "ADICIONAL" });
+        form.add(cmbTipo, c);
 
-    c.gridx = 0; c.gridy = 3; form.add(new JLabel("Proveedor:"), c);
-    c.gridx = 1; c.gridwidth = 3; cmbProveedor = new JComboBox<>(new String[]{"Proveedor A","Proveedor B"}); form.add(cmbProveedor, c);
-    c.gridwidth = 1;
+        c.gridx = 2;
+        form.add(new JLabel("Precio Costo:"), c);
+        c.gridx = 3;
+        txtPrecioCosto = new JTextField();
+        form.add(txtPrecioCosto, c);
 
-    // tabla en el centro
-    String[] columns = new String[]{ "ID","Codigo","Nombre","Tipo","Clasificación","Precio Costo","Precio Venta","Precio Final","Ganancia","Stock Mínimo","Proveedor" };
-    tableModel = new DefaultTableModel(columns,0) {
-        @Override public boolean isCellEditable(int r, int c1){ return false; }
-    };
-    tblProductos = new JTable(tableModel);
-    tblProductos.setRowHeight(22);
-    tblProductos.setFillsViewportHeight(true);
-    // ajustar anchos por defecto
-    tblProductos.getColumnModel().getColumn(0).setPreferredWidth(40);
-    tblProductos.getColumnModel().getColumn(2).setPreferredWidth(180);
+        c.gridx = 0;
+        c.gridy = 2;
+        form.add(new JLabel("Precio Venta:"), c);
+        c.gridx = 1;
+        txtPrecioVenta = new JTextField();
+        form.add(txtPrecioVenta, c);
 
-    JScrollPane scroll = new JScrollPane(tblProductos);
+        c.gridx = 2;
+        form.add(new JLabel("Stock Mínimo:"), c);
+        c.gridx = 3;
+        txtStockMinimo = new JTextField("5");
+        form.add(txtStockMinimo, c);
 
-    // botones
-    btnGuardar = new JButton("Guardar"); btnRecalcular = new JButton("Recalcular algoritmos");
-    btnCancelar = new JButton("Cancelar");
-    JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT,8,8));
-    botones.add(btnRecalcular); botones.add(btnGuardar); botones.add(btnCancelar);
+        c.gridx = 0;
+        c.gridy = 3;
+        form.add(new JLabel("Proveedor:"), c);
+        c.gridx = 1;
+        c.gridwidth = 3;
+        cmbProveedor = new JComboBox<>(new String[] { "Proveedor A", "Proveedor B" });
+        form.add(cmbProveedor, c);
+        c.gridwidth = 1;
 
-    // organizar todo en frame
-    setLayout(new BorderLayout(8,8));
-    add(form, BorderLayout.NORTH);
-    add(scroll, BorderLayout.CENTER);
-    add(botones, BorderLayout.SOUTH);
+        // Tabla
+        String[] columns = new String[] { "ID", "Código", "Nombre", "Tipo", "Clasificación", "Precio Costo",
+                "Precio Venta", "Precio Final", "Ganancia", "Stock Mínimo", "Proveedor" };
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c1) {
+                return false;
+            }
+        };
+        tblProductos = new JTable(tableModel);
+        tblProductos.setRowHeight(22);
+        tblProductos.setFillsViewportHeight(true);
+        tblProductos.getColumnModel().getColumn(0).setPreferredWidth(40);
+        tblProductos.getColumnModel().getColumn(2).setPreferredWidth(180);
+        JScrollPane scroll = new JScrollPane(tblProductos);
 
-    // listeners (mantener lógicos)
-    btnGuardar.addActionListener(e -> guardarProducto());
-    btnCancelar.addActionListener(e -> dispose());
-    btnRecalcular.addActionListener(e -> recalcularAlgoritmos());
-}
+        // Botones
+        btnGuardar = crearBotonEstilizado("Guardar");
+        btnRecalcular = crearBotonEstilizado("Recalcular algoritmos");
+        btnCancelar = crearBotonEstilizado("Cancelar");
+        JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        botones.add(btnRecalcular);
+        botones.add(btnGuardar);
+        botones.add(btnCancelar);
+
+        // Ensamblar todo
+        JPanel panelCentro = new JPanel(new BorderLayout());
+        panelCentro.setBackground(Color.WHITE);
+        panelCentro.add(form, BorderLayout.NORTH);
+        panelCentro.add(scroll, BorderLayout.CENTER);
+        panelCentro.add(botones, BorderLayout.SOUTH);
+
+        panelPrincipal.add(panelTitulo, BorderLayout.NORTH);
+        panelPrincipal.add(panelCentro, BorderLayout.CENTER);
+
+        setContentPane(panelPrincipal);
+
+        // Listeners
+        btnGuardar.addActionListener(e -> guardarProducto());
+        btnCancelar.addActionListener(e -> dispose());
+        btnRecalcular.addActionListener(e -> recalcularAlgoritmos());
+    }
 
     private void guardarProducto() {
         String codigo = txtCodigo.getText().trim();
@@ -298,5 +354,16 @@ public class ProductoFrame extends JFrame {
             ProductoFrame frame = new ProductoFrame(new InventarioController());
             frame.setVisible(true);
         });
+    }
+
+    private JButton crearBotonEstilizado(String texto) {
+        JButton boton = new JButton(texto);
+        boton.setBackground(new Color(0, 123, 255));
+        boton.setForeground(Color.WHITE);
+        boton.setFont(new Font("Arial", Font.BOLD, 13));
+        boton.setFocusPainted(false);
+        boton.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return boton;
     }
 }

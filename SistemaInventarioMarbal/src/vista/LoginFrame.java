@@ -3,6 +3,7 @@ package vista;
 import controlador.UsuarioController;
 
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
 
 /**
@@ -71,32 +72,82 @@ public class LoginFrame extends JFrame {
 
     public LoginFrame(UsuarioController usuarioController) {
         this.usuarioController = usuarioController != null ? usuarioController : new UsuarioController();
-        setTitle("Login");
-        setSize(320, 200);
+
+        setTitle("Sistema Inventario Marbal");
+        setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new GridLayout(3, 2));
+        setResizable(false);
 
-        JLabel lblUsername = new JLabel("Username:");
-        txtUsername = new JTextField();
-        JLabel lblPassword = new JLabel("Password:");
-        txtPassword = new JPasswordField();
-        btnLogin = new JButton("Login");
+        /* ========== DISEÑO CELESTE ========== */
+        JPanel panelPrincipal = new JPanel(new BorderLayout());
+        panelPrincipal.setBackground(Color.WHITE);
 
+        // Panel del título celeste
+        JPanel panelTitulo = new JPanel();
+        panelTitulo.setBackground(new Color(0, 123, 255));
+        panelTitulo.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+
+        JLabel lblTitulo = new JLabel("SISTEMA INVENTARIO MARBAL", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitulo.setForeground(Color.WHITE);
+        panelTitulo.add(lblTitulo);
+
+        // Panel del formulario
+        JPanel panelForm = new JPanel();
+        panelForm.setBackground(Color.WHITE);
+        panelForm.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Usuario
+        JLabel lblUsuario = new JLabel("Usuario:");
+        txtUsername = new JTextField(15);
+        estilizarCampo(txtUsername);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panelForm.add(lblUsuario, gbc);
+
+        gbc.gridx = 1;
+        panelForm.add(txtUsername, gbc);
+
+        // Contraseña
+        JLabel lblContrasena = new JLabel("Contraseña:");
+        txtPassword = new JPasswordField(15);
+        estilizarCampo(txtPassword);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panelForm.add(lblContrasena, gbc);
+
+        gbc.gridx = 1;
+        panelForm.add(txtPassword, gbc);
+
+        // Botón
+        btnLogin = new JButton("Iniciar sesión");
+        btnLogin.setBackground(new Color(0, 123, 255));
+        btnLogin.setForeground(Color.WHITE);
+        btnLogin.setFocusPainted(false);
+        btnLogin.setFont(new Font("Arial", Font.BOLD, 14));
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        panelForm.add(btnLogin, gbc);
+
+        // Acción del botón
         btnLogin.addActionListener(e -> {
             String username = txtUsername.getText();
             String password = new String(txtPassword.getPassword());
-            // Integración mínima: mapear username a rol (en un sistema real consultar
-            // UsuarioController)
             String rol = "OPERARIO";
             if ("admin".equalsIgnoreCase(username)) {
                 rol = "ADMINISTRADOR";
             }
-            // crear copia final para usarla dentro del lambda
             final String rolFinal = rol;
 
             JOptionPane.showMessageDialog(this, "Login successful! Rol: " + rolFinal);
-            // abrir MenuPrincipal pasando controladores y rol
             SwingUtilities.invokeLater(() -> {
                 MenuPrincipal menu = new MenuPrincipal(rolFinal);
                 menu.setVisible(true);
@@ -104,17 +155,21 @@ public class LoginFrame extends JFrame {
             dispose();
         });
 
-        add(lblUsername);
-        add(txtUsername);
-        add(lblPassword);
-        add(txtPassword);
-        add(btnLogin);
+        // Ensamblar todo
+        panelPrincipal.add(panelTitulo, BorderLayout.NORTH);
+        panelPrincipal.add(panelForm, BorderLayout.CENTER);
+
+        add(panelPrincipal);
+    }
+
+    private void estilizarCampo(JTextField campo) {
+        campo.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        campo.setBackground(Color.WHITE);
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            LoginFrame loginFrame = new LoginFrame(null);
-            loginFrame.setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new LoginFrame(null).setVisible(true));
     }
 }
