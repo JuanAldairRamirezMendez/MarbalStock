@@ -1,8 +1,18 @@
 package controlador;
 
+import conexion.ConexionBD;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.Usuario;
+
+/**
+ * Nota: este controlador mantiene métodos en memoria para gestión básica,
+ * pero añade autenticación contra la base de datos mediante `autenticar`.
+ */
 
 /**
  * UsuarioController - Controlador de autenticación y gestión de usuarios
@@ -60,6 +70,86 @@ public class UsuarioController {
 
     public UsuarioController() {
         this.usuarios = new ArrayList<>();
+    }
+
+    /**
+     * Autentica un usuario contra la tabla `usuarios` en la base de datos.
+     * Devuelve un objeto `Usuario` con id, nombre y rol si la autenticación es correcta.
+     */
+    public Usuario autenticar(String username, String password) {
+        ConexionBD cb = new ConexionBD();
+        Connection conn = cb.abrirConexion();
+        if (conn == null) return null;
+
+        String sql = "SELECT id, nombre, rol, password_hash, salt FROM usuarios WHERE username = ? LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String storedHash = rs.getString("password_hash");
+                    String salt = rs.getString("salt");
+                    String computed;
+                    if (salt != null && !salt.isEmpty()) {
+                        computed = SecurityUtil.sha256Hex(salt + password);
+                    } else {
+                        computed = SecurityUtil.sha256Hex(password);
+                    }
+                    if (computed.equalsIgnoreCase(storedHash)) {
+                        int id = rs.getInt("id");
+                        String nombre = rs.getString("nombre");
+                        String rol = rs.getString("rol");
+                        return new Usuario(id, nombre, rol);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            cb.cerrarConexion();
+        }
+        return null;
+    }
+
+    /**
+     * Registra un nuevo usuario en la base de datos.
+     * Genera un salt aleatorio y guarda el hash SHA-256(salt+password).
+     * Retorna true si se insertó correctamente, false en caso contrario.
+     */
+    public boolean registrarUsuario(String username, String nombre, String password, String rol) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) return false;
+        ConexionBD cb = new ConexionBD();
+        Connection conn = cb.abrirConexion();
+        if (conn == null) return false;
+        try {
+            // comprobar si username existe
+            String check = "SELECT id FROM usuarios WHERE username = ? LIMIT 1";
+            try (PreparedStatement ps = conn.prepareStatement(check)) {
+                ps.setString(1, username);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return false; // ya existe
+                }
+            }
+
+            // generar salt simple (UUID)
+            String salt = java.util.UUID.randomUUID().toString().replaceAll("-", "");
+            String hash = SecurityUtil.sha256Hex(salt + password);
+
+            String insert = "INSERT INTO usuarios (nombre, username, password_hash, salt, rol, activo) VALUES (?, ?, ?, ?, ?, 1)";
+            try (PreparedStatement ps = conn.prepareStatement(insert)) {
+                ps.setString(1, nombre == null ? username : nombre);
+                ps.setString(2, username);
+                ps.setString(3, hash);
+                ps.setString(4, salt);
+                ps.setString(5, rol == null ? "OPERARIO" : rol);
+                int affected = ps.executeUpdate();
+                return affected > 0;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            cb.cerrarConexion();
+        }
+        return false;
     }
 
     public void agregarUsuario(Usuario usuario) {

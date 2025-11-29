@@ -155,16 +155,16 @@ public class ProductoFrame extends JFrame {
     private void initializeComponents() {
         // Panel principal con fondo blanco
         JPanel panelPrincipal = new JPanel(new BorderLayout());
-        panelPrincipal.setBackground(Color.WHITE);
+        panelPrincipal.setBackground(UIConstants.PANEL_BG);
 
         // Panel del título celeste
         JPanel panelTitulo = new JPanel();
-        panelTitulo.setBackground(new Color(0, 123, 255));
+        panelTitulo.setBackground(UIConstants.PRIMARY);
         panelTitulo.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
 
         JLabel lblTitulo = new JLabel("Datos del Producto", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
-        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(UIConstants.TITLE_FONT);
+        lblTitulo.setForeground(UIConstants.PANEL_BG);
         panelTitulo.add(lblTitulo);
 
         // Panel del formulario con GridBagLayout
@@ -243,6 +243,54 @@ public class ProductoFrame extends JFrame {
         tblProductos.getColumnModel().getColumn(0).setPreferredWidth(40);
         tblProductos.getColumnModel().getColumn(2).setPreferredWidth(180);
         JScrollPane scroll = new JScrollPane(tblProductos);
+        
+        // Panel de registro de consumo diario (debajo del formulario)
+        JPanel consumoPanel = new JPanel(new GridBagLayout());
+        consumoPanel.setBorder(BorderFactory.createTitledBorder("Registrar Consumo Diario"));
+        consumoPanel.setBackground(Color.WHITE);
+        GridBagConstraints gc = new GridBagConstraints();
+        gc.insets = new Insets(6,6,6,6);
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        
+        gc.gridx = 0; gc.gridy = 0;
+        consumoPanel.add(new JLabel("Producto:"), gc);
+        gc.gridx = 1;
+        JComboBox<String> cmbProductos = new JComboBox<>();
+        consumoPanel.add(cmbProductos, gc);
+        
+        gc.gridx = 0; gc.gridy = 1;
+        consumoPanel.add(new JLabel("Cantidad Consumida:"), gc);
+        gc.gridx = 1;
+        JTextField txtCantidadConsumo = new JTextField("0", 10);
+        consumoPanel.add(txtCantidadConsumo, gc);
+        
+        gc.gridx = 0; gc.gridy = 2;
+        consumoPanel.add(new JLabel("Observaciones (opcional):"), gc);
+        gc.gridx = 1;
+        JTextField txtObs = new JTextField(20);
+        consumoPanel.add(txtObs, gc);
+        
+        gc.gridx = 0; gc.gridy = 3; gc.gridwidth = 2;
+        JButton btnRegistrarConsumo = crearBotonEstilizado("Registrar Consumo");
+        consumoPanel.add(btnRegistrarConsumo, gc);
+        
+        btnRegistrarConsumo.addActionListener(e -> {
+            String sel = (String) cmbProductos.getSelectedItem();
+            if (sel == null || sel.isEmpty()) { JOptionPane.showMessageDialog(this, "Seleccione un producto"); return; }
+            int prodId = Integer.parseInt(sel.split(" - ")[0].trim());
+            double cantidad = parseDoubleSafe(txtCantidadConsumo.getText());
+            if (cantidad <= 0) { JOptionPane.showMessageDialog(this, "Cantidad inválida"); return; }
+            int cantidadInt = (int)Math.round(cantidad);
+            // Llamar al stored procedure que encapsula lógica en la BD
+            boolean ok = inventarioController.registrarConsumoSP(prodId, cantidadInt, txtObs.getText());
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Consumo registrado");
+                cargarProductos();
+                refrescarComboProductos(cmbProductos);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error registrando consumo (ver logs)");
+            }
+        });
 
         // Botones
         btnGuardar = crearBotonEstilizado("Guardar");
@@ -256,7 +304,12 @@ public class ProductoFrame extends JFrame {
         // Ensamblar todo
         JPanel panelCentro = new JPanel(new BorderLayout());
         panelCentro.setBackground(Color.WHITE);
-        panelCentro.add(form, BorderLayout.NORTH);
+        // Agrupamos el formulario y el panel de consumo en la parte superior
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.setBackground(Color.WHITE);
+        northPanel.add(form, BorderLayout.NORTH);
+        northPanel.add(consumoPanel, BorderLayout.SOUTH);
+        panelCentro.add(northPanel, BorderLayout.NORTH);
         panelCentro.add(scroll, BorderLayout.CENTER);
         panelCentro.add(botones, BorderLayout.SOUTH);
 
@@ -269,6 +322,55 @@ public class ProductoFrame extends JFrame {
         btnGuardar.addActionListener(e -> guardarProducto());
         btnCancelar.addActionListener(e -> dispose());
         btnRecalcular.addActionListener(e -> recalcularAlgoritmos());
+        // Cargar productos desde la base de datos
+        cargarProductos();
+    }
+
+    private void cargarProductos() {
+        if (inventarioController == null) return;
+        tableModel.setRowCount(0);
+        for (Producto p : inventarioController.listarProductos()) {
+            String clasificacion = clasificarProducto(p.getTipo());
+            double precioCosto = p.getPrecioCosto();
+            double precioVenta = p.getPrecioVenta();
+            double precioFinal = p.calcularPrecioFinal();
+            double ganancia = p.calcularGanancia();
+            Object[] row = new Object[] {
+                    p.getId(),
+                    p.getCodigo() == null ? "" : p.getCodigo(),
+                    p.getNombre(),
+                    p.getTipo(),
+                    clasificacion,
+                    String.format("%.2f", precioCosto),
+                    String.format("%.2f", precioVenta),
+                    String.format("%.2f", precioFinal),
+                    String.format("%.2f", ganancia),
+                    p.getStockMinimo(),
+                    "-"
+            };
+            tableModel.addRow(row);
+        }
+        // refrescar combo si existe en el formulario (se crea dinámicamente)
+        // buscamos componentes tipo JComboBox dentro del panel y actualizamos el primero que coincida
+        Component[] comps = getContentPane().getComponents();
+        // Llamamos al helper que actualiza combos si los encuentra
+        for (Component c : comps) {
+            if (c instanceof JPanel) {
+                for (Component sub : ((JPanel)c).getComponents()) {
+                    if (sub instanceof JComboBox) {
+                        try { refrescarComboProductos((JComboBox<String>) sub); } catch (Exception ignore) {}
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private void refrescarComboProductos(JComboBox<String> combo) {
+        combo.removeAllItems();
+        for (Producto p : inventarioController.listarProductos()) {
+            combo.addItem(p.getId() + " - " + p.getNombre());
+        }
     }
 
     private void guardarProducto() {
@@ -303,11 +405,16 @@ public class ProductoFrame extends JFrame {
         // Opcional: agregar al controlador de inventario (se mantiene simple)
         try {
             int id = Integer.parseInt(codigo);
-            Producto p = new Producto(id, nombre, precioVenta);
+            Producto p = new Producto(id, codigo, nombre, tipo, 0, stockMinimo, precioCosto, precioVenta, 0);
             if (inventarioController != null) {
                 inventarioController.agregarProducto(p);
             }
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException ex) {
+            // Si el código no es numérico, creamos sin id y delegamos al controlador
+            Producto p = new Producto(0, codigo, nombre, tipo, 0, stockMinimo, precioCosto, precioVenta, 0);
+            if (inventarioController != null) {
+                inventarioController.agregarProducto(p);
+            }
         }
 
         JOptionPane.showMessageDialog(this, "Producto guardado: " + nombre);
@@ -357,13 +464,6 @@ public class ProductoFrame extends JFrame {
     }
 
     private JButton crearBotonEstilizado(String texto) {
-        JButton boton = new JButton(texto);
-        boton.setBackground(new Color(0, 123, 255));
-        boton.setForeground(Color.WHITE);
-        boton.setFont(new Font("Arial", Font.BOLD, 13));
-        boton.setFocusPainted(false);
-        boton.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
-        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return boton;
+        return UIFactory.createRoundedButton(texto, UIConstants.PRIMARY, Color.WHITE, 140, 34);
     }
 }

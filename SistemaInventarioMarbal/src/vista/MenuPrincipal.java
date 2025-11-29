@@ -5,6 +5,8 @@ import controlador.ReporteController;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.*;
+import vista.RoundedBorder;
 
 /**
  * MenuPrincipal - Interfaz principal del sistema post-autenticación
@@ -113,8 +115,8 @@ public class MenuPrincipal extends JFrame {
         this.inventarioController = new InventarioController();
         this.reporteController = new ReporteController();
 
-        setTitle("Menú Principal - Sistema Inventario Marbal");
-        setSize(450, 400);
+        setTitle("Sistema de Inventario MARBAL - Menú Principal");
+        setSize(780, 260);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
@@ -122,73 +124,80 @@ public class MenuPrincipal extends JFrame {
     }
 
     private void initialize() {
-        // Panel principal con fondo blanco
+        // Panel principal con estilo similar a las capturas
         JPanel panelPrincipal = new JPanel(new BorderLayout());
-        panelPrincipal.setBackground(Color.WHITE);
+        panelPrincipal.setBackground(UIConstants.BACKGROUND);
 
-        // Panel del título celeste
-        JPanel panelTitulo = new JPanel();
-        panelTitulo.setBackground(new Color(0, 123, 255));
-        panelTitulo.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        // Encabezado
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(UIConstants.HEADER);
+        header.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        JLabel title = new JLabel("MENÚ PRINCIPAL", SwingConstants.CENTER);
+        title.setForeground(UIConstants.PANEL_BG);
+        title.setFont(UIConstants.SECTION_FONT);
+        header.add(title, BorderLayout.CENTER);
 
-        JLabel lblTitulo = new JLabel("MENÚ PRINCIPAL", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
-        lblTitulo.setForeground(Color.WHITE);
-        panelTitulo.add(lblTitulo);
+        // Barra tipo 'pill' debajo del encabezado (estilo visual)
+        JPanel pillBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 6));
+        pillBar.setBackground(UIConstants.BACKGROUND);
+        JLabel pillLabel = new JLabel("  MENÚ PRINCIPAL  ", SwingConstants.CENTER);
+        pillLabel.setOpaque(true);
+        pillLabel.setBackground(UIConstants.PRIMARY);
+        pillLabel.setForeground(UIConstants.PANEL_BG);
+        pillLabel.setFont(UIConstants.SECTION_FONT);
+        pillLabel.setBorder(BorderFactory.createEmptyBorder(6, 18, 6, 18));
+        pillBar.add(pillLabel);
+        // Agrupar header + pill
+        JPanel headerWrap = new JPanel(new BorderLayout());
+        headerWrap.setBackground(UIConstants.BACKGROUND);
+        headerWrap.add(header, BorderLayout.NORTH);
+        headerWrap.add(pillBar, BorderLayout.SOUTH);
 
-        // Panel de botones centrado
-        JPanel panelBotones = new JPanel(new GridBagLayout());
-        panelBotones.setBackground(Color.WHITE);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
+        // Panel de botones 2x3
+        JPanel botonesGrid = new JPanel(new GridLayout(2, 3, 10, 10));
+        botonesGrid.setBackground(UIConstants.BACKGROUND);
+        botonesGrid.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
-        // Botones
-        JButton btnInventario = crearBoton("Gestión de Inventario");
-        JButton btnReportes = crearBoton("Reportes");
-        JButton btnUsuarios = crearBoton("Gestión de Usuarios");
+        JButton btnIngresar = crearBoton("➕  Ingresar Productos");
+        JButton btnGestionar = crearBoton("⚙️  Gestionar Productos");
+        JButton btnResumen = crearBoton("📊  Ver Resumen");
+        JButton btnReportes = crearBoton("🧾  Reportes");
+        JButton btnMovimientos = crearBoton("📦  Movimientos");
         JButton btnCerrarSesion = crearBoton("Cerrar Sesión");
 
-        // Acciones
-        btnInventario.addActionListener(e -> new ProductoFrame(inventarioController).setVisible(true));
+        btnIngresar.addActionListener(e -> new ProductoFrame(inventarioController).setVisible(true));
+        btnGestionar.addActionListener(e -> new ProductoFrame(inventarioController).setVisible(true));
+        btnResumen.addActionListener(e -> JOptionPane.showMessageDialog(this, "Resumen (pendiente)"));
         btnReportes.addActionListener(e -> new ReporteFrame(reporteController).setVisible(true));
-        btnUsuarios.addActionListener(e -> JOptionPane.showMessageDialog(this, "Función Gestión Usuarios (pendiente)"));
+        btnMovimientos.addActionListener(e -> new MovimientosFrame(inventarioController).setVisible(true));
         btnCerrarSesion.addActionListener(e -> {
             dispose();
             new LoginFrame(null).setVisible(true);
         });
 
-        // Mostrar solo según rol
-        gbc.gridy = 0;
-        panelBotones.add(btnInventario, gbc);
+        botonesGrid.add(btnIngresar);
+        botonesGrid.add(btnGestionar);
+        botonesGrid.add(btnResumen);
+        botonesGrid.add(btnReportes);
+        botonesGrid.add(btnMovimientos);
 
-        gbc.gridy = 1;
-        panelBotones.add(btnReportes, gbc);
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        bottom.setBackground(UIConstants.BACKGROUND);
+        // Botón de cerrar sesión más pequeño y a la izquierda
+        btnCerrarSesion.setPreferredSize(new Dimension(120, 28));
+        btnCerrarSesion.setBackground(UIConstants.SECONDARY_BUTTON);
+        btnCerrarSesion.setForeground(UIConstants.TEXT_PRIMARY);
+        bottom.add(btnCerrarSesion);
 
-        if ("ADMINISTRADOR".equalsIgnoreCase(rol)) {
-            gbc.gridy = 2;
-            panelBotones.add(btnUsuarios, gbc);
-        }
-
-        gbc.gridy = 3;
-        panelBotones.add(btnCerrarSesion, gbc);
-
-        // Ensamblar todo
-        panelPrincipal.add(panelTitulo, BorderLayout.NORTH);
-        panelPrincipal.add(panelBotones, BorderLayout.CENTER);
+        panelPrincipal.add(headerWrap, BorderLayout.NORTH);
+        panelPrincipal.add(botonesGrid, BorderLayout.CENTER);
+        panelPrincipal.add(bottom, BorderLayout.SOUTH);
 
         add(panelPrincipal);
     }
 
     private JButton crearBoton(String texto) {
-        JButton boton = new JButton(texto);
-        boton.setPreferredSize(new Dimension(250, 40));
-        boton.setFont(new Font("Arial", Font.PLAIN, 14));
-        boton.setBackground(new Color(240, 240, 240));
-        boton.setFocusPainted(false);
-        boton.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        return boton;
+        return UIFactory.createRoundedButton(texto, UIConstants.PRIMARY, Color.WHITE, 250, 40);
     }
 
     public static void main(String[] args) {

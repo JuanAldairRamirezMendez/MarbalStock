@@ -25,14 +25,22 @@ public class ReporteFrame extends JFrame {
     }
 
     private void initialize() {
-        //panel
-        JPanel panelTitulo = new JPanel();
-        panelTitulo.setBackground(new Color(0, 123, 255));
-        panelTitulo.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
-        JLabel lblTitulo = new JLabel("Reporte de Ventas", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+        // Encabezado
+        JPanel panelTitulo = new JPanel(new BorderLayout());
+        panelTitulo.setBackground(UIConstants.HEADER);
+        panelTitulo.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        JLabel lblTitulo = new JLabel("MARBAL - REPORTE DE INVENTARIO", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblTitulo.setForeground(Color.WHITE);
-        panelTitulo.add(lblTitulo);
+        panelTitulo.add(lblTitulo, BorderLayout.CENTER);
+
+        // Botón imprimir a la derecha
+        JButton btnImprimir = UIFactory.createRoundedButton("Imprimir", UIConstants.PRIMARY, Color.WHITE, 120, 32);
+        btnImprimir.addActionListener(e -> JOptionPane.showMessageDialog(this, "Impresión (simulada)"));
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        right.setOpaque(false);
+        right.add(btnImprimir);
+        panelTitulo.add(right, BorderLayout.EAST);
 
         //tabla
         String[] cols = reporteController.getColumnNamesVentaDetalle();
@@ -48,7 +56,7 @@ public class ReporteFrame extends JFrame {
         tblReporte.setRowHeight(24);
         tblReporte.setFont(new Font("Arial", Font.PLAIN, 13));
         tblReporte.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
-        tblReporte.getTableHeader().setBackground(new Color(240, 240, 240));
+        tblReporte.getTableHeader().setBackground(UIConstants.TABLE_HEADER_BG);
         tblReporte.setGridColor(Color.LIGHT_GRAY);
         tblReporte.setShowHorizontalLines(true);
         tblReporte.setShowVerticalLines(false);
@@ -57,34 +65,34 @@ public class ReporteFrame extends JFrame {
         scroll.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
         //Boton exportar
-        JButton btnExport = crearBoton("Exportar CSV");
+        JButton btnExport = UIFactory.createRoundedButton("Exportar CSV", UIConstants.PRIMARY, Color.WHITE, 150, 34);
         btnExport.addActionListener(e -> {
             reporteController.exportarReporte("CSV");
             JOptionPane.showMessageDialog(this, "Exportación solicitada (simulado)");
         });
 
-        JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelBoton.setBackground(Color.WHITE);
-        panelBoton.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 20));
-        panelBoton.add(btnExport);
+        // Pie con líneas para firma
+        JPanel firmaPanel = new JPanel(new GridLayout(2, 1));
+        firmaPanel.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+        firmaPanel.setBackground(Color.WHITE);
+        JPanel line1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        line1.add(new JLabel("Firma: _____________________________"));
+        JPanel line2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        line2.add(new JLabel("Nombre: _____________________________"));
+        firmaPanel.add(line1);
+        firmaPanel.add(line2);
 
         //Panel Principal
         JPanel panelPrincipal = new JPanel(new BorderLayout());
         panelPrincipal.setBackground(Color.WHITE);
         panelPrincipal.add(panelTitulo, BorderLayout.NORTH);
         panelPrincipal.add(scroll, BorderLayout.CENTER);
-        panelPrincipal.add(panelBoton, BorderLayout.SOUTH);
+        panelPrincipal.add(firmaPanel, BorderLayout.SOUTH);
 
         add(panelPrincipal);
     }
 
     private JButton crearBoton(String texto) {
-        JButton boton = new JButton(texto);
-        boton.setBackground(new Color(0, 123, 255));
-        boton.setForeground(Color.WHITE);
-        boton.setFont(new Font("Arial", Font.BOLD, 14));
-        boton.setFocusPainted(false);
-        boton.setPreferredSize(new Dimension(180, 36));
-        return boton;
+        return UIFactory.createRoundedButton(texto, UIConstants.PRIMARY, Color.WHITE, 180, 36);
     }
 }

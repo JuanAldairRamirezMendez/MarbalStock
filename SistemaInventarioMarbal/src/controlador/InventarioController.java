@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.sql.CallableStatement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import modelo.MovimientoInventario;
 import modelo.Producto;
@@ -68,7 +70,7 @@ public class InventarioController {
     /** Carga todos los productos desde la base de datos a memoria (lista) */
     public ArrayList<Producto> listarProductos() {
         ArrayList<Producto> productos = new ArrayList<>();
-        String sql = "SELECT id, nombre, precio, cantidad FROM productos";
+        String sql = "SELECT id, nombre, precio, stock, tipo, consumo_mensual, alerta_threshold FROM productos";
         Connection conn = conexionBD.abrirConexion();
         try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -76,9 +78,13 @@ public class InventarioController {
                 int id = rs.getInt("id");
                 String nombre = rs.getString("nombre");
                 double precio = rs.getDouble("precio");
-                int cantidad = rs.getInt("cantidad");
+                double stockDec = rs.getDouble("stock");
+                String tipo = rs.getString("tipo");
+                int consumoMensual = rs.getInt("consumo_mensual");
+                int alerta = rs.getInt("alerta_threshold");
+                int cantidad = (int) Math.round(stockDec);
                 // Mapear a fields del modelo Producto; algunos campos pueden quedar por defecto
-                Producto p = new Producto(id, "", nombre, "", cantidad, 5, 0.0, precio, 0);
+                Producto p = new Producto(id, "", nombre, tipo, cantidad, 5, 0.0, precio, 0);
                 productos.add(p);
             }
         } catch (SQLException ex) {
@@ -88,7 +94,7 @@ public class InventarioController {
     }
 
     public Producto obtenerProductoPorId(int idBusqueda) {
-        String sql = "SELECT id, nombre, precio, cantidad FROM productos WHERE id = ?";
+        String sql = "SELECT id, nombre, precio, stock, tipo FROM productos WHERE id = ?";
         Connection conn = conexionBD.abrirConexion();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idBusqueda);
@@ -97,8 +103,10 @@ public class InventarioController {
                     int id = rs.getInt("id");
                     String nombre = rs.getString("nombre");
                     double precio = rs.getDouble("precio");
-                    int cantidad = rs.getInt("cantidad");
-                    return new Producto(id, "", nombre, "", cantidad, 5, 0.0, precio, 0);
+                    double stockDec = rs.getDouble("stock");
+                    String tipo = rs.getString("tipo");
+                    int cantidad = (int) Math.round(stockDec);
+                    return new Producto(id, "", nombre, tipo, cantidad, 5, 0.0, precio, 0);
                 }
             }
         } catch (SQLException ex) {
@@ -108,12 +116,15 @@ public class InventarioController {
     }
 
     public boolean agregarProducto(Producto producto) {
-        String sql = "INSERT INTO productos (nombre, precio, cantidad) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO productos (nombre, precio, stock, tipo, consumo_mensual, alerta_threshold) VALUES (?, ?, ?, ?, ?, ?)";
         Connection conn = conexionBD.abrirConexion();
         try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, producto.getNombre());
             ps.setDouble(2, producto.getPrecioVenta());
-            ps.setInt(3, producto.getStock());
+            ps.setDouble(3, producto.getStock());
+            ps.setString(4, producto.getTipo());
+            ps.setInt(5, producto.getStockMinimo());
+            ps.setInt(6, producto.getStockMinimo());
             int affected = ps.executeUpdate();
             if (affected > 0) {
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -150,13 +161,14 @@ public class InventarioController {
     }
 
     public boolean modificarProducto(Producto productoModificado) {
-        String sql = "UPDATE productos SET nombre = ?, precio = ?, cantidad = ? WHERE id = ?";
+        String sql = "UPDATE productos SET nombre = ?, precio = ?, stock = ?, tipo = ? WHERE id = ?";
         Connection conn = conexionBD.abrirConexion();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, productoModificado.getNombre());
             ps.setDouble(2, productoModificado.getPrecioVenta());
-            ps.setInt(3, productoModificado.getStock());
-            ps.setInt(4, productoModificado.getId());
+            ps.setDouble(3, productoModificado.getStock());
+            ps.setString(4, productoModificado.getTipo());
+            ps.setInt(5, productoModificado.getId());
             int affected = ps.executeUpdate();
             if (affected > 0) {
                 registrarMovimiento(new MovimientoInventario(productoModificado.getId(), productoModificado.getStock(), "AJUSTE", "Modificación de producto"));
@@ -174,24 +186,93 @@ public class InventarioController {
 
     /** Registra un movimiento en la tabla movimiento_inventario */
     public boolean registrarMovimiento(MovimientoInventario movimiento) {
-        String sql = "INSERT INTO movimiento_inventario (producto_id, cantidad, tipo, descripcion) VALUES (?, ?, ?, ?)";
+        String insertSql = "INSERT INTO movimiento_inventario (producto_id, cantidad, tipo, descripcion) VALUES (?, ?, ?, ?)";
+        String updateStockSql = "UPDATE productos SET stock = stock + ? WHERE id = ?"; // sumará o restará según signo
         Connection conn = conexionBD.abrirConexion();
-        try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, movimiento.getProductoId());
-            ps.setInt(2, movimiento.getCantidad());
-            ps.setString(3, movimiento.getTipo());
-            ps.setString(4, movimiento.getDescripcion());
-            int affected = ps.executeUpdate();
-            if (affected > 0) {
-                try (ResultSet keys = ps.getGeneratedKeys()) {
-                    if (keys.next()) movimiento.setId(keys.getInt(1));
+        try {
+            conn.setAutoCommit(false);
+            try (PreparedStatement psIns = conn.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                psIns.setInt(1, movimiento.getProductoId());
+                psIns.setInt(2, movimiento.getCantidad());
+                psIns.setString(3, movimiento.getTipo());
+                psIns.setString(4, movimiento.getDescripcion());
+                int affected = psIns.executeUpdate();
+                if (affected > 0) {
+                    try (ResultSet keys = psIns.getGeneratedKeys()) {
+                        if (keys.next()) movimiento.setId(keys.getInt(1));
+                    }
+                    // preparar actualización de stock
+                    int delta = movimiento.getCantidad();
+                    if ("SALIDA".equalsIgnoreCase(movimiento.getTipo())) delta = -Math.abs(delta);
+                    else if ("INGRESO".equalsIgnoreCase(movimiento.getTipo())) delta = Math.abs(delta);
+                    else if ("AJUSTE".equalsIgnoreCase(movimiento.getTipo())) {
+                        // Para ajuste tomamos la cantidad tal cual (puede ser positivo o negativo)
+                        // aquí asumimos movimiento.cantidad ya tiene signo
+                    }
+                    try (PreparedStatement psUpd = conn.prepareStatement(updateStockSql)) {
+                        psUpd.setInt(1, delta);
+                        psUpd.setInt(2, movimiento.getProductoId());
+                        psUpd.executeUpdate();
+                    }
+                    conn.commit();
+                    return true;
                 }
-                return true;
             }
+            conn.rollback();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try { conn.rollback(); } catch (SQLException ignore) {}
+        } finally {
+            try { conn.setAutoCommit(true); } catch (SQLException ignore) {}
+        }
+        return false;
+    }
+
+    /**
+     * Llama al stored procedure `registrar_consumo(producto_id, cantidad, descripcion)`
+     * implementado en la base de datos. El procedure debe encargarse de validar
+     * y actualizar stock y alertas. Retorna true si se ejecutó correctamente.
+     */
+    public boolean registrarConsumoSP(int productoId, int cantidad, String descripcion) {
+        String call = "CALL registrar_consumo(?, ?, ?)";
+        Connection conn = conexionBD.abrirConexion();
+        try (CallableStatement cs = conn.prepareCall(call)) {
+            cs.setInt(1, productoId);
+            cs.setInt(2, cantidad);
+            cs.setString(3, descripcion == null ? "" : descripcion);
+            boolean hadResults = cs.execute();
+            // asumimos que la ejecución sin excepción indica éxito
+            return true;
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * Recupera la lista de movimientos desde la base de datos.
+     */
+    public ArrayList<MovimientoInventario> listarMovimientos() {
+        ArrayList<MovimientoInventario> movs = new ArrayList<>();
+        String sql = "SELECT id, producto_id, cantidad, tipo, descripcion, fecha FROM movimiento_inventario ORDER BY fecha DESC";
+        Connection conn = conexionBD.abrirConexion();
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                int productoId = rs.getInt("producto_id");
+                int cantidad = rs.getInt("cantidad");
+                String tipo = rs.getString("tipo");
+                String descripcion = rs.getString("descripcion");
+                Timestamp ts = rs.getTimestamp("fecha");
+                LocalDateTime fecha = ts != null ? ts.toLocalDateTime() : LocalDateTime.now();
+                MovimientoInventario m = new MovimientoInventario(id, productoId, cantidad, tipo, descripcion, fecha);
+                movs.add(m);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return movs;
     }
 
     /** Si el producto está por debajo del stock mínimo, genera una orden automática */

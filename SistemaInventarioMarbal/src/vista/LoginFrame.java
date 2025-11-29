@@ -1,6 +1,7 @@
 package vista;
 
 import controlador.UsuarioController;
+import modelo.Usuario;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -69,40 +70,47 @@ public class LoginFrame extends JFrame {
     private JPasswordField txtPassword;
     private JButton btnLogin;
     private UsuarioController usuarioController;
+    private int intentosFallidos = 0;
 
     public LoginFrame(UsuarioController usuarioController) {
         this.usuarioController = usuarioController != null ? usuarioController : new UsuarioController();
 
-        setTitle("Sistema Inventario Marbal");
-        setSize(400, 300);
+        setTitle("Sistema de Inventario MARBAL - Iniciar Sesión");
+        setSize(520, 320);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        /* ========== DISEÑO CELESTE ========== */
+        /* ========== DISEÑO CELESTE (estilo similar a capturas) ========== */
         JPanel panelPrincipal = new JPanel(new BorderLayout());
-        panelPrincipal.setBackground(Color.WHITE);
+        panelPrincipal.setBackground(UIConstants.BACKGROUND);
 
-        // Panel del título celeste
-        JPanel panelTitulo = new JPanel();
-        panelTitulo.setBackground(new Color(0, 123, 255));
-        panelTitulo.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        // Panel del encabezado (azul con nombre MARBAL)
+        JPanel panelEncabezado = new JPanel(new BorderLayout());
+        panelEncabezado.setBackground(UIConstants.HEADER);
+        panelEncabezado.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
-        JLabel lblTitulo = new JLabel("SISTEMA INVENTARIO MARBAL", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
-        lblTitulo.setForeground(Color.WHITE);
-        panelTitulo.add(lblTitulo);
+        JLabel lblMarca = new JLabel("MARBAL", SwingConstants.CENTER);
+        lblMarca.setFont(UIConstants.TITLE_FONT);
+        lblMarca.setForeground(UIConstants.PANEL_BG);
+        panelEncabezado.add(lblMarca, BorderLayout.CENTER);
+
+        JLabel lblSub = new JLabel("Sistema de Control de Inventario", SwingConstants.CENTER);
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblSub.setForeground(UIConstants.HEADER_SUB);
+        panelEncabezado.add(lblSub, BorderLayout.SOUTH);
 
         // Panel del formulario
         JPanel panelForm = new JPanel();
-        panelForm.setBackground(Color.WHITE);
+        panelForm.setBackground(UIConstants.PANEL_BG);
+        panelForm.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
         panelForm.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Usuario
-        JLabel lblUsuario = new JLabel("Usuario:");
+        JLabel lblUsuario = new JLabel("Usuario (Email):");
         txtUsername = new JTextField(15);
         estilizarCampo(txtUsername);
 
@@ -125,38 +133,58 @@ public class LoginFrame extends JFrame {
         gbc.gridx = 1;
         panelForm.add(txtPassword, gbc);
 
-        // Botón
-        btnLogin = new JButton("Iniciar sesión");
-        btnLogin.setBackground(new Color(0, 123, 255));
-        btnLogin.setForeground(Color.WHITE);
-        btnLogin.setFocusPainted(false);
-        btnLogin.setFont(new Font("Arial", Font.BOLD, 14));
+        // Botones (usar UIFactory para consistencia)
+        btnLogin = UIFactory.createRoundedButton("Iniciar Sesión", UIConstants.PRIMARY, Color.WHITE, 0, 34);
+        JButton btnRegistrar = UIFactory.createRoundedButton("Registrarse", UIConstants.SECONDARY_BUTTON, Color.DARK_GRAY, 0, 34);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 1;
         panelForm.add(btnLogin, gbc);
 
-        // Acción del botón
-        btnLogin.addActionListener(e -> {
-            String username = txtUsername.getText();
-            String password = new String(txtPassword.getPassword());
-            String rol = "OPERARIO";
-            if ("admin".equalsIgnoreCase(username)) {
-                rol = "ADMINISTRADOR";
-            }
-            final String rolFinal = rol;
+        gbc.gridx = 1;
+        panelForm.add(btnRegistrar, gbc);
 
-            JOptionPane.showMessageDialog(this, "Login successful! Rol: " + rolFinal);
-            SwingUtilities.invokeLater(() -> {
-                MenuPrincipal menu = new MenuPrincipal(rolFinal);
-                menu.setVisible(true);
-            });
-            dispose();
+        // Acción del botón (autenticación real)
+        btnLogin.addActionListener(e -> {
+            String username = txtUsername.getText().trim();
+            String password = new String(txtPassword.getPassword());
+
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Ingrese usuario y contraseña", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (usuarioController == null) {
+                JOptionPane.showMessageDialog(this, "Error interno: controlador no disponible.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Usuario usuario = usuarioController.autenticar(username, password);
+            if (usuario != null) {
+                JOptionPane.showMessageDialog(this, "Bienvenido: " + usuario.getNombre());
+                SwingUtilities.invokeLater(() -> {
+                    MenuPrincipal menu = new MenuPrincipal(usuario.getRol());
+                    menu.setVisible(true);
+                });
+                dispose();
+            } else {
+                intentosFallidos++;
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Error", JOptionPane.ERROR_MESSAGE);
+                if (intentosFallidos >= 3) {
+                    JOptionPane.showMessageDialog(this, "Ha excedido el número de intentos. Contacte al administrador.", "Bloqueado", JOptionPane.WARNING_MESSAGE);
+                    System.exit(0);
+                }
+            }
+        });
+
+        btnRegistrar.addActionListener(e -> {
+            RegistroDialog dlg = new RegistroDialog(this, this.usuarioController);
+            dlg.setVisible(true);
         });
 
         // Ensamblar todo
-        panelPrincipal.add(panelTitulo, BorderLayout.NORTH);
+            panelPrincipal.add(panelEncabezado, BorderLayout.NORTH);
         panelPrincipal.add(panelForm, BorderLayout.CENTER);
 
         add(panelPrincipal);
@@ -164,12 +192,12 @@ public class LoginFrame extends JFrame {
 
     private void estilizarCampo(JTextField campo) {
         campo.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        campo.setBackground(Color.WHITE);
+            BorderFactory.createMatteBorder(0, 0, 1, 0, UIConstants.TEXT_SECONDARY),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        campo.setBackground(UIConstants.PANEL_BG);
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LoginFrame(null).setVisible(true));
+        SwingUtilities.invokeLater(() -> new LoginFrame(new UsuarioController()).setVisible(true));
     }
 }

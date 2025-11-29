@@ -153,131 +153,72 @@ public class ProductoVista extends JFrame {
 
 1. Nunca mezclar lógica con interfaz.
 2. La base de datos se accede solo desde el Modelo o DAO.
-3. El controlador nunca debe contener código gráfico.
-4. La vista solo llama funciones del controlador.
+# Sistema Inventario Marbal
 
----
+Proyecto Java (Swing) para la gestión de inventario desarrollado para Inversiones Comerciales Marbal E.I.R.L.
 
-## 8. DOCUMENTO LISTO PARA PEGAR (README + INFORME)
+## Resumen rápido
+- Aplicación de escritorio (Java Swing) con patrón MVC.
+- Persistencia por JDBC (MySQL configurado por defecto en `recursos/bd/script_bd.sql`).
 
-### 8.1 README.md (Para GitHub y entrega en clase)
+## Requisitos
+- JDK 17+ instalado (el proyecto se probó con JDK 25 localmente).
+- Apache Maven (para build y tests).
 
-```markdown
-# Sistema de Inventario MARBALSTOCK
+## Archivos importantes
+- `src/` : código fuente (se conservó la estructura original del proyecto).
+- `recursos/bd/script_bd.sql` : script de creación de base de datos y datos precargados.
+- `pom.xml` : archivo de build Maven (añadido para compilar, testear y empacar un JAR con dependencias).
+- `.github/workflows/ci.yml` : workflow de CI que construye, ejecuta tests y sube el JAR como artifact.
 
-Sistema de gestión de inventario desarrollado para **Inversiones Comerciales Marbal E.I.R.L.**, utilizando Java y arquitectura **MVC (Modelo - Vista - Controlador)**.
+## Compilar y generar el JAR (local)
+1. Abrir PowerShell en la carpeta del proyecto:
 
----
-## Descripción del Proyecto
-Este sistema permite gestionar productos, stock y movimientos de inventario de manera organizada, reduciendo errores y mejorando el control interno del almacén.
-
----
-## Tecnologías Utilizadas
-- Java 17
-- MySQL / PostgreSQL
-- Apache Maven
-- Java Swing (Interfaz gráfica)
-- JDBC
-
----
-## Estructura del Proyecto (MVC)
+```powershell
+cd 'C:\Users\aldai\Downloads\proyectos\MarbalStock\SistemaInventarioMarbal'
+mvn -B -DskipTests=false clean package
 ```
 
-src/
-├── conexion/     -> Conexión a base de datos
-├── modelo/       -> Clases de negocio
-├── controlador/  -> Lógica del sistema
-└── vista/        -> Interfaces gráficas
+2. Al terminar el build el JAR empaquetado ("shaded") estará en:
 
-````
-
----
-## Requisitos Previos
-Antes de ejecutar, asegúrese de tener instalado:
-- JDK 17+
-- MySQL o PostgreSQL
-- Apache Maven
-- PowerShell (Windows)
-
-Verificar:
-```bash
-java -version
-mvn -version
-````
-
----
-
-## Instalación y Configuración
-
-1. Clonar repositorio:
-
-```bash
-git clone https://github.com/tu-usuario/marbalstock.git
+```
+target\SistemaInventarioMarbal-1.0.0-shaded.jar
 ```
 
-2. Crear base de datos:
+## Ejecutar la aplicación (JAR)
 
+```powershell
+& 'C:\Program Files\Eclipse Adoptium\jdk-25.0.0.36-hotspot\bin\java.exe' -jar .\target\SistemaInventarioMarbal-1.0.0-shaded.jar
+```
+
+Notas:
+- El JAR incluye las dependencias (MySQL Connector incluido). No hace falta copiar manualmente el connector.
+- La aplicación es una GUI Swing; asegúrate de ejecutar en un entorno con servidor X/GUI (Windows, macOS, Linux con entorno gráfico).
+
+## Pruebas (tests)
+- Se añadió un test mínimo (`SecurityUtilTest`) que se ejecuta con `mvn test` durante el build.
+
+## Integración continua (GitHub Actions)
+- El workflow está en `.github/workflows/ci.yml` y hace:
+    - Checkout del repo
+    - Setup JDK 17
+    - `mvn -B -DskipTests=false clean package`
+    - Sube `target/*.jar` como artifact (nombre: `sistema-marbal-jar`)
+
+### Para activar CI en GitHub
+1. Commit y push de los cambios (incluyendo `pom.xml` y `.github/workflows/ci.yml`) a la rama `main`.
+2. En la pestaña `Actions` del repositorio verás el job ejecutándose; al completarse, abre el run y descarga el artifact `sistema-marbal-jar`.
+
+## Recomendaciones y pasos siguientes
+- Seguridad: cambiar SHA-256 simple por PBKDF2/BCrypt/Argon2 antes de poner en producción.
+- Tests: ampliar con tests de integración (H2 en memoria) para `ConexionBD`, `UsuarioController` e `InventarioController`.
+- Si quieres que el CI use tu versión local de Java (ej. JDK 25), puedo actualizar el workflow para usarla (algunos runners disponen solo de LTS por defecto).
+
+## Contacto
+- Si quieres que actualice el `README` con comandos adicionales, tests o que cree releases automáticas, dime y lo hago.
 ```sql
+
 CREATE DATABASE marbalstock;
-```
-
-3. Ejecutar script:
-   Ubicado en: `recursos/bd/script_bd.sql`
-
-4. Configurar conexión:
-   En:
 
 ```
-src/conexion/ConexionBD.java
-```
-
-Ejemplo:
-
-```java
-private static final String URL = "jdbc:mysql://localhost:3306/marbalstock";
-private static final String USER = "root";
-private static final String PASSWORD = "";
-```
-
----
-
-## Ejecución del Sistema
-
-Desde consola:
-
-```bash
-mvn clean package
-java -jar target/marbalstock.jar
-```
-
-O desde el IDE ejecutando:
-`vista.LoginFrame`
-
----
-
-## Funcionalidades Principales
-
-* Registro de productos
-* Gestión de stock
-* Control de entradas y salidas
-* Reportes básicos
-* Login de usuarios
-
----
-
-## Limitaciones
-
-* No soporta uso multiusuario en red
-* No incluye reportes PDF avanzados
-* No maneja múltiples almacenes
-
----
-
-## Autor
-
-Poll M-L
-Estudiante de Ingeniería de Sistemas
-UTP
-
-
 
