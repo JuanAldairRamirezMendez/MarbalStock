@@ -46,19 +46,19 @@ jobs:
 
     - name: Create DB properties for tests
       run: |
-        mkdir -p recursos/config
+        mkdir -p SistemaInventarioMarbal/recursos/config
         printf "%s\n" \
           "db.type=mysql" \
-          "db.url=jdbc://127.0.0.1:3306/marbal_test?useSSL=false&serverTimezone=UTC" \
+          "db.url=jdbc:mysql://127.0.0.1:3306/marbal_test?useSSL=false&serverTimezone=UTC" \
           "db.user=root" \
           "db.password=root" \
-          "db.driver=com.mysql.cj.jdbc.Driver" > recursos/config/db.properties
+          "db.driver=com.mysql.cj.jdbc.Driver" > SistemaInventarioMarbal/recursos/config/db.properties
 
     - name: Build with Maven (including integration tests)
-      run: mvn -B -DskipTests=false -DskipITs=false verify
+      run: cd SistemaInventarioMarbal && mvn -B -DskipTests=false -DskipITs=false verify
 
     - name: Upload JAR artifact
       uses: actions/upload-artifact@v4
       with:
         name: sistema-marbal-jar
-        path: target/*.jar
+        path: SistemaInventarioMarbal/target/*.jar
