@@ -13,6 +13,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
+          POSTGRES_USER: root
           POSTGRES_PASSWORD: root
           POSTGRES_DB: marbal_test
         ports:
@@ -31,15 +32,15 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: '21'
         cache: 'maven'
 
-    - name: Wait for MySQL
+    - name: Wait for Postgres
       run: |
-        echo "Waiting for MySQL to be available..."
+        echo "Waiting for Postgres to be available..."
         for i in {1..30}; do
-          if nc -z 127.0.0.1 3306; then
-            echo "MySQL is up"; break
+          if nc -z 127.0.0.1 5432; then
+            echo "Postgres is up"; break
           fi
           sleep 2
         done
