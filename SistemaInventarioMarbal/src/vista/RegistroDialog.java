@@ -72,7 +72,11 @@ public class RegistroDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Usuario registrado correctamente.");
             dispose();
         } else {
-            JOptionPane.showMessageDialog(this, "No se pudo registrar el usuario. El username puede existir.", "Error", JOptionPane.ERROR_MESSAGE);
+            String reason = usuarioController.getLastErrorMessage();
+            if (reason == null || reason.isEmpty()) {
+                reason = "No se pudo registrar el usuario. El username puede existir.";
+            }
+            JOptionPane.showMessageDialog(this, reason, "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

@@ -67,9 +67,14 @@ import modelo.Usuario;
  */
 public class UsuarioController {
     private List<Usuario> usuarios;
+    private String lastErrorMessage;
 
     public UsuarioController() {
         this.usuarios = new ArrayList<>();
+    }
+
+    public String getLastErrorMessage() {
+        return lastErrorMessage;
     }
 
     /**
@@ -119,10 +124,14 @@ public class UsuarioController {
      * Retorna true si se insertó correctamente, false en caso contrario.
      */
     public boolean registrarUsuario(String username, String nombre, String password, String rol) {
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) return false;
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
+            lastErrorMessage = "Username y contraseña son obligatorios.";
+            return false;
+        }
         ConexionBD cb = new ConexionBD();
         Connection conn = cb.abrirConexion();
         if (conn == null) {
+            lastErrorMessage = "No se pudo conectar a la base de datos.";
             System.err.println("UsuarioController.registrarUsuario: no se pudo abrir conexión a la base de datos.");
             return false;
         }
@@ -148,10 +157,15 @@ public class UsuarioController {
                 ps.setString(4, salt);
                 ps.setString(5, rol == null ? "OPERARIO" : rol);
                 int affected = ps.executeUpdate();
+                if (affected > 0) {
+                    lastErrorMessage = null;
+                }
                 return affected > 0;
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
+            // Detallar error para UI
+            lastErrorMessage = ex.getMessage();
         } finally {
             cb.cerrarConexion();
         }
