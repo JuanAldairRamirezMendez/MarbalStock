@@ -19,7 +19,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres"
+          --health-cmd="pg_isready -U root"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -55,7 +55,7 @@ jobs:
           "db.password=root" \
           "db.driver=org.postgresql.Driver" > SistemaInventarioMarbal/recursos/config/db.properties
 
-    - name: Create DB test properties and Build with Maven (including integration tests)
+    - name: Create DB test properties
       run: |
         mkdir -p SistemaInventarioMarbal/recursos/config
         printf "%s\n" \
@@ -64,6 +64,15 @@ jobs:
           "db.user=root" \
           "db.password=root" \
           "db.driver=org.postgresql.Driver" > SistemaInventarioMarbal/recursos/config/db.test.properties
+
+    - name: Install psql client and apply DB migration
+      run: |
+        sudo apt-get update && sudo apt-get install -y postgresql-client
+        echo "Applying DB migration to marbal_test (may fail if DB already contains tables)..."
+        PGPASSWORD=root psql -h 127.0.0.1 -U root -d marbal_test -f SistemaInventarioMarbal/recursos/bd/migration_postgres.sql || true
+
+    - name: Build with Maven (including integration tests)
+      run: |
         cd SistemaInventarioMarbal && mvn -B -DskipTests=false -DskipITs=false -Ddb.props=recursos/config/db.test.properties verify
 
     - name: Upload JAR artifact

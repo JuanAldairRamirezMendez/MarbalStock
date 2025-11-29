@@ -49,13 +49,14 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 -- productos (simplified snapshot - keep your existing table if present)
-CREATE TABLE IF NOT EXISTS producto (
+-- NOTE: tests expect table name `productos` and numeric `stock`/`precio` types
+CREATE TABLE IF NOT EXISTS productos (
     id SERIAL PRIMARY KEY,
     codigo VARCHAR(64) UNIQUE,
     nombre VARCHAR(255) NOT NULL,
     tipo VARCHAR(80),
     unidad VARCHAR(40),
-    stock INTEGER DEFAULT 0,
+    stock NUMERIC(12,2) DEFAULT 0.0,
     precio NUMERIC(12,2) DEFAULT 0.0,
     creado TIMESTAMP DEFAULT now()
 );
@@ -100,9 +101,9 @@ CREATE INDEX IF NOT EXISTS idx_alertas_reparto_cliente_producto ON alertas_repar
 
 -- (Optional) Seed sample data for testing
 -- Inserta un cliente y producto de ejemplo si no existen (ajusta nombres/campos según tu BD)
-INSERT INTO producto (codigo, nombre, tipo, unidad, stock)
+INSERT INTO productos (codigo, nombre, tipo, unidad, stock)
 SELECT 'P-1000', 'Producto Ejemplo', 'OTROS', 'UNIDAD', 100
-WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo='P-1000');
+WHERE NOT EXISTS (SELECT 1 FROM productos WHERE codigo='P-1000');
 
 INSERT INTO usuarios (username, password_hash, nombre, rol, activo)
 SELECT 'admin', encode(digest('adminpass','sha256'),'hex'), 'Administrador', 'ADMIN', true
@@ -110,11 +111,11 @@ WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE username='admin');
 
 -- Inserta una asignación de ejemplo: cliente_id=1, producto_id=1, asignacion_anual=1200
 INSERT INTO producto_asignacion (cliente_id, producto_id, asignacion_anual)
-SELECT 1, (SELECT id FROM producto WHERE codigo='P-1000' LIMIT 1), 1200
-WHERE NOT EXISTS (SELECT 1 FROM producto_asignacion WHERE cliente_id=1 AND producto_id=(SELECT id FROM producto WHERE codigo='P-1000' LIMIT 1));
+SELECT 1, (SELECT id FROM productos WHERE codigo='P-1000' LIMIT 1), 1200
+WHERE NOT EXISTS (SELECT 1 FROM producto_asignacion WHERE cliente_id=1 AND producto_id=(SELECT id FROM productos WHERE codigo='P-1000' LIMIT 1));
 
 -- 6) Grants: dar permisos al role marbal sobre tablas principales
-GRANT SELECT, INSERT, UPDATE, DELETE ON producto TO marbal;
+GRANT SELECT, INSERT, UPDATE, DELETE ON productos TO marbal;
 GRANT SELECT, INSERT, UPDATE, DELETE ON movimiento_inventario TO marbal;
 GRANT SELECT, INSERT, UPDATE, DELETE ON producto_asignacion TO marbal;
 GRANT SELECT, INSERT, UPDATE, DELETE ON alertas_reparto TO marbal;
