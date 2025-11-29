@@ -170,3 +170,13 @@ BEGIN
         END IF;
     END IF;
 END$$;
+-- Añadir columna alerta_threshold a productos si no existe (idempotente)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name='productos' AND column_name='alerta_threshold'
+    ) THEN
+        ALTER TABLE productos ADD COLUMN alerta_threshold NUMERIC(12,2) DEFAULT 0.00;
+    END IF;
+END$$;
