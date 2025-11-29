@@ -79,7 +79,10 @@ public class UsuarioController {
     public Usuario autenticar(String username, String password) {
         ConexionBD cb = new ConexionBD();
         Connection conn = cb.abrirConexion();
-        if (conn == null) return null;
+        if (conn == null) {
+            System.err.println("UsuarioController: no se pudo abrir conexión a la base de datos. Verifique recursos/config/db.properties y credenciales.");
+            return null;
+        }
 
         String sql = "SELECT id, nombre, rol, password_hash, salt FROM usuarios WHERE username = ? LIMIT 1";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -119,7 +122,10 @@ public class UsuarioController {
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) return false;
         ConexionBD cb = new ConexionBD();
         Connection conn = cb.abrirConexion();
-        if (conn == null) return false;
+        if (conn == null) {
+            System.err.println("UsuarioController.registrarUsuario: no se pudo abrir conexión a la base de datos.");
+            return false;
+        }
         try {
             // comprobar si username existe
             String check = "SELECT id FROM usuarios WHERE username = ? LIMIT 1";
