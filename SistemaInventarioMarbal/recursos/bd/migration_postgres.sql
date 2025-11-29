@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    salt VARCHAR(255),
     nombre VARCHAR(150),
     rol VARCHAR(40) DEFAULT 'OPERARIO',
     activo BOOLEAN DEFAULT TRUE,
@@ -57,6 +58,7 @@ CREATE TABLE IF NOT EXISTS productos (
     tipo VARCHAR(80),
     unidad VARCHAR(40),
     stock NUMERIC(12,2) DEFAULT 0.0,
+    consumo_mensual NUMERIC(12,2) DEFAULT 0.0,
     precio NUMERIC(12,2) DEFAULT 0.0,
     creado TIMESTAMP DEFAULT now()
 );
@@ -105,8 +107,12 @@ INSERT INTO productos (codigo, nombre, tipo, unidad, stock)
 SELECT 'P-1000', 'Producto Ejemplo', 'OTROS', 'UNIDAD', 100
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE codigo='P-1000');
 
-INSERT INTO usuarios (username, password_hash, nombre, rol, activo)
-SELECT 'admin', encode(digest('adminpass','sha256'),'hex'), 'Administrador', 'ADMIN', true
+-- Insert admin user including a salt (generated) if not present
+INSERT INTO usuarios (username, password_hash, salt, nombre, rol, activo)
+SELECT 'admin', encode(digest('adminpass'||s, 'sha256'),'hex'), s, 'Administrador', 'ADMIN', true
+FROM (
+    SELECT encode(gen_random_bytes(12), 'hex') AS s
+) AS _salt
 WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE username='admin');
 
 -- Inserta una asignación de ejemplo: cliente_id=1, producto_id=1, asignacion_anual=1200
