@@ -56,3 +56,14 @@ CREATE TABLE IF NOT EXISTS reportes (
     fecha DATETIME NOT NULL,
     descripcion TEXT NOT NULL
 );
+
+-- Crear tabla de movimientos de inventario
+CREATE TABLE IF NOT EXISTS movimiento_inventario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    producto_id INT NOT NULL,
+    cantidad INT NOT NULL,
+    tipo VARCHAR(50) NOT NULL, -- EJ: INGRESO, SALIDA, AJUSTE
+    descripcion VARCHAR(255),
+    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);

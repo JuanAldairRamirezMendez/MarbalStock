@@ -2,6 +2,12 @@ package controlador;
 
 import java.util.List;
 import modelo.OrdenCompra;
+import conexion.ConexionBD;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import modelo.Proveedor;
 
 /**
  * OrdenCompraController - Controlador para órdenes de compra automáticas
@@ -58,9 +64,30 @@ import modelo.OrdenCompra;
  * @version 1.0
  */
 public class OrdenCompraController {
-    
-    public void agregarOrdenCompra(OrdenCompra ordenCompra) {
-        // Lógica para agregar una orden de compra
+    private ConexionBD conexionBD;
+
+    public OrdenCompraController() {
+        this.conexionBD = new ConexionBD();
+    }
+
+    public boolean agregarOrdenCompra(OrdenCompra ordenCompra) {
+        String sql = "INSERT INTO ordenes_compra (fecha, proveedor_id) VALUES (?, ?)";
+        Connection conn = conexionBD.abrirConexion();
+        try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, ordenCompra.getFecha());
+            Proveedor p = ordenCompra.getProveedor();
+            if (p != null) ps.setInt(2, p.getId()); else ps.setNull(2, java.sql.Types.INTEGER);
+            int affected = ps.executeUpdate();
+            if (affected > 0) {
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) ordenCompra.setId(keys.getInt(1));
+                }
+                return true;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return false;
     }
 
     public void eliminarOrdenCompra(int id) {
