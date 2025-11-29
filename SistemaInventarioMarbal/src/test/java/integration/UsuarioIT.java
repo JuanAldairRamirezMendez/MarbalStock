@@ -15,12 +15,14 @@ import java.sql.Connection;
 import java.sql.Statement;
 
 public class UsuarioIT {
-    private static final String PROPS_PATH = "recursos/config/db.properties";
+    private static final String PROPS_PATH = "recursos/config/db.test.properties";
 
     @BeforeAll
     public static void setup() throws Exception {
         // Ensure config directory exists
         File cfg = new File(PROPS_PATH);
+        // tell ConexionBD to use the test properties file for this JVM
+        System.setProperty("db.props", PROPS_PATH);
         cfg.getParentFile().mkdirs();
         try (FileWriter fw = new FileWriter(cfg)) {
             fw.write("db.type=mysql\n");

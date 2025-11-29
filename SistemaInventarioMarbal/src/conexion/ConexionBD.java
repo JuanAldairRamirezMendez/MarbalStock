@@ -51,12 +51,25 @@ public class ConexionBD {
     private void loadConfig() {
         Properties props = new Properties();
         // Intentar leer propiedades desde varias ubicaciones relativas comunes
-        String[] candidatePaths = new String[] {
-            "recursos/config/db.properties",
-            "SistemaInventarioMarbal/recursos/config/db.properties",
-            "src/main/resources/db.properties",
-            "db.properties"
-        };
+        // Permitir anular el path mediante -Ddb.props=ruta
+        String sysProp = System.getProperty("db.props");
+        String[] candidatePaths;
+        if (sysProp != null && !sysProp.isEmpty()) {
+            candidatePaths = new String[] {
+                sysProp,
+                "recursos/config/db.properties",
+                "SistemaInventarioMarbal/recursos/config/db.properties",
+                "src/main/resources/db.properties",
+                "db.properties"
+            };
+        } else {
+            candidatePaths = new String[] {
+                "recursos/config/db.properties",
+                "SistemaInventarioMarbal/recursos/config/db.properties",
+                "src/main/resources/db.properties",
+                "db.properties"
+            };
+        }
         boolean loaded = false;
         for (String path : candidatePaths) {
             try (FileInputStream fis = new FileInputStream(path)) {
